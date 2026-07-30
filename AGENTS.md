@@ -41,6 +41,10 @@ Stack-specific conventions live in `.claude/rules/`. Read the ones matching the 
 | `web/tanstack-start.md` | Server functions, streaming, Vercel deploy via Nitro, Node-side scripts |
 | `web/ai-pipeline.md` | The deterministic/LLM boundary, `@effect/ai` usage, AI Gateway routing, committed cache |
 
+## Current implementation state
+
+This repo is currently a bare Vite+/TanStack Start scaffold — `src/domain/`, `src/data/`, `src/features/`, and `src/lib/` don't exist yet, and `package.json` has none of `@mantine/core`, `effect`, or `@effect/ai`. `.claude/rules/` and `docs/requirement.md` describe the **target architecture** for the Chef Passport PoC, not code that already exists. Add the dependency before importing from it.
+
 ## Agent skills
 
 ### Issue tracker
@@ -54,3 +58,7 @@ The five canonical triage roles, using the default label strings. See `docs/agen
 ### Domain docs
 
 Single-context — one `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Product spec
+
+PoC scope, the three demo personas, the three-screen demo flow, and the 25-hour/2-week time budget are defined in `docs/requirement.md` (Japanese). Read it before implementing new features or components.
