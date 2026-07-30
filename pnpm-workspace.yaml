@@ -1,0 +1,19 @@
+overrides:
+  vite: npm:@voidzero-dev/vite-plus-core@0.2.1
+
+trustPolicy: no-downgrade
+
+# postcss/@babel が引く正規の deep transitive 依存。provenance 不足による誤検知のため、
+# この特定バージョンのみ trust チェックから除外する（将来の別バージョンは引き続き検証対象）。
+trustPolicyExclude:
+  - "nanoid@3.3.14"
+  - "semver@6.3.1"
+
+onlyBuiltDependencies:
+  - esbuild
+
+# 公開直後の侵害された可能性のあるリリースを避けるため、公開から1日（1440分）経過したバージョンのみ許可する
+minimumReleaseAge: 1440
+
+allowBuilds:
+  msgpackr-extract: false

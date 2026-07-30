@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    # The committed lockfile is reviewed and pinned with integrity hashes, so CI
+    # trusts it and skips re-applying the time-based supply-chain policies
+    # (minimumReleaseAge / trustPolicy in pnpm-workspace.yaml) on every install.
+    # Those policies still gate dependency adoption locally at `vp add` / `vp update`
+    # resolution time; without this, CI fails for up to 24h after bumping to a
+    # freshly published package (ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION).
+    env:
+      PNPM_CONFIG_TRUST_LOCKFILE: "true"
+    steps:
+      - uses: actions/checkout@v4
+      # Installs Vite+, sets up Node.js (from .node-version) and the package
+      # manager, caches installs, and runs `vp install` (run-install defaults to true).
+      - uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version-file: .node-version
+          cache: true
+      - run: vp check
+      - run: vp test
+      - run: vp build

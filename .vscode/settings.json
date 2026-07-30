@@ -1,0 +1,36 @@
+{
+  "files.readonlyInclude": {
+    "pnpm-lock.yaml": true,
+    "**/routeTree.gen.ts": true,
+    "**/*.md": true
+  },
+  "cSpell.ignorePaths": ["pnpm-lock.yaml", "**/routeTree.gen.ts", "**/*.md"],
+  "cSpell.words": ["oxfmt", "oxlint", "stylesheet", "tsgo", "voidzero"],
+
+  // oxc
+  "oxc.enable": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "editor.formatOnSave": true,
+
+  // Disable other linters/formatters
+  "prettier.enable": false,
+  "biome.enabled": false,
+  "eslint.enable": false
+}

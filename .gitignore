@@ -1,0 +1,29 @@
+# dependencies
+node_modules
+
+# output
+dist
+.output
+
+# generated tool dirs
+.tanstack
+.cursor
+.agents/skills
+
+# environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# caches
+.cache
+.fallow
+*.tsbuildinfo
+
+# IntelliJ based IDEs
+.idea
+
+# Finder (MacOS) folder config
+.DS_Store

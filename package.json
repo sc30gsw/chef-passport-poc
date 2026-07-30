@@ -1,0 +1,44 @@
+{
+  "name": "tanstack-start-start",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "vp build",
+    "check": "vp check",
+    "dev": "vp dev",
+    "doctor": "vp exec react-doctor . --verbose --yes --no-lint",
+    "fallow": "vp exec fallow dead-code",
+    "fix": "vp check --fix",
+    "preview": "vp preview",
+    "test": "vp test",
+    "type-check": "vp check --no-lint"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "^1.170.16",
+    "@tanstack/react-start": "^1.168.26",
+    "cnfast": "^0.0.6",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@rolldown/plugin-babel": "^0.2.3",
+    "@tailwindcss/vite": "^4.3.1",
+    "@tanstack/react-router-devtools": "^1.167.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "better-typescript-lib": "^2.12.0",
+    "fallow": "^2.101.0",
+    "oxlint-plugin-react-doctor": "^0.5.8",
+    "react-doctor": "^0.5.8",
+    "tailwindcss": "^4.3.1",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.1",
+    "vite-plus": "0.2.1"
+  },
+  "engines": {
+    "node": ">=24.17.0"
+  },
+  "packageManager": "pnpm@11.8.0"
+}
