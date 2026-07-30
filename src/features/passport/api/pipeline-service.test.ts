@@ -1,5 +1,4 @@
-import { LanguageModel } from "@effect/ai";
-import { Cause, Context, Effect, Exit, Layer, Option, Stream } from "effect";
+import { Cause, Effect, Exit, Layer, Option, Stream } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 
 import { lookupCachedPassport } from "~/data/cache-index";
@@ -14,6 +13,12 @@ import {
   runPassportPipeline,
 } from "~/features/passport/api/pipeline-service";
 import type { PipelineEvent } from "~/features/passport/types/pipeline-event";
+import {
+  STUB_RESPONSES,
+  failingModelLayer,
+  flakyModelLayer,
+  stubModelLayer,
+} from "~/testing/stub-language-model";
 
 const visas = Effect.runSync(loadVisaRequirements);
 const jobs = Effect.runSync(loadJobs);
@@ -46,60 +51,6 @@ async function elapsedMs(work: () => Promise<unknown>): Promise<number> {
   await work();
   return performance.now() - startedAt;
 }
-
-/**
- * Swap the model, keep the pipeline. The real API is never called from a test — the point of these is
- * that the *structure* runs, since the judgement it wraps is already covered by the domain tests.
- *
- * `generateObject` is the only method the four steps use, so the stub implements just that. The cast
- * is confined to this helper rather than spread across the tests.
- */
-function stubModelLayer(byObjectName: Readonly<Record<string, unknown>>) {
-  const service = {
-    generateObject: ({ objectName }: { objectName?: string }) =>
-      Effect.succeed({ value: byObjectName[objectName ?? ""] }),
-  } as unknown as Context.Tag.Service<LanguageModel.LanguageModel>;
-
-  return Layer.succeed(LanguageModel.LanguageModel, service);
-}
-
-/** Fails the first `failures` calls, then behaves like the stub — a transient gateway blip. */
-function flakyModelLayer(failures: number, byObjectName: Readonly<Record<string, unknown>>) {
-  let remaining = failures;
-
-  const service = {
-    generateObject: ({ objectName }: { objectName?: string }) => {
-      if (remaining > 0) {
-        remaining -= 1;
-        return Effect.fail(new Error("transient"));
-      }
-      return Effect.succeed({ value: byObjectName[objectName ?? ""] });
-    },
-  } as unknown as Context.Tag.Service<LanguageModel.LanguageModel>;
-
-  return Layer.succeed(LanguageModel.LanguageModel, service);
-}
-
-const STUB_RESPONSES = {
-  countryExplanation: { explanationJa: "スタブの説明文" },
-  jobMatchReason: { reasonJa: "スタブの理由文" },
-  skillSet: {
-    experienceYears: 8,
-    languageLevel: "conversational",
-    primaryGenre: "sushi",
-    skills: ["sashimi-slicing", "yanagiba-knife"],
-    summaryJa: "スタブの要約",
-  },
-  translations: {
-    translations: [
-      {
-        localEn: "Slicing white-fish sashimi",
-        skillId: "sashimi-slicing",
-        sourceJa: "白身の刺身引き",
-      },
-    ],
-  },
-} as const;
 
 describe("clampReplayMs", () => {
   it.each([
@@ -256,11 +207,7 @@ describe("PipelineLive（スタブモデル）", () => {
   });
 
   it("モデルが落ち続けたら、そのステップ名つきの Failed イベントになる", async () => {
-    const failing = Layer.succeed(LanguageModel.LanguageModel, {
-      generateObject: () => Effect.fail(new Error("boom")),
-    } as unknown as Context.Tag.Service<LanguageModel.LanguageModel>);
-
-    const events = await collect(PipelineLive.pipe(Layer.provide(failing)));
+    const events = await collect(PipelineLive.pipe(Layer.provide(failingModelLayer())));
     const last = events.at(-1);
 
     expect(last?._tag).toBe("Failed");

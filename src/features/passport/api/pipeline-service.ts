@@ -42,6 +42,20 @@ export function clampReplayMs(durationMs: number): number {
 const RESILIENCE = Schedule.exponential("500 millis").pipe(Schedule.intersect(Schedule.recurs(2)));
 
 /**
+ * Closed decision #6's two budgets. The per-step one bounds a single hung model call; the total one
+ * bounds the run, because four steps that each retry twice inside 30 seconds could otherwise keep a
+ * serverless invocation alive well past the platform's own limit and return nothing at all.
+ */
+const TOTAL_BUDGET = "120 seconds";
+
+/**
+ * The fan-out width for the steps that explain several countries and several jobs at once. Bounded
+ * rather than unlimited: an unbounded `Effect.all` would open one gateway request per job, which is
+ * the fastest way to trip a rate limit on the one call path the demo cannot afford to lose.
+ */
+const FAN_OUT = { concurrency: 4 } as const;
+
+/**
  * Short nouns for failure text. `STEP_LABELS_JA` are progress sentences ("…しています") and do not
  * compose into a failure message, so the two label sets stay separate.
  */
@@ -69,6 +83,29 @@ function resilient<A, E, R>(step: PipelineStep, effect: Effect.Effect<A, E, R>) 
         }),
     ),
   );
+}
+
+/**
+ * The one place a failure becomes an event. `TimeoutException` is matched by tag rather than by
+ * `instanceof` — `Effect.timeout` yields a plain tagged value, not a class instance.
+ */
+function failureEvent(error: unknown): PipelineEvent {
+  if (error instanceof PipelineError) {
+    return { _tag: "Failed", messageJa: error.messageJa, step: error.step };
+  }
+
+  const isTimeout =
+    typeof error === "object" && error !== null && "_tag" in error
+      ? error._tag === "TimeoutException"
+      : false;
+
+  return {
+    _tag: "Failed",
+    messageJa: isTimeout
+      ? "パイプラインが制限時間を超えました"
+      : "パイプラインの実行に失敗しました",
+    step: "unknown",
+  };
 }
 
 type Offer = (event: PipelineEvent) => Effect.Effect<void>;
@@ -156,35 +193,40 @@ function liveProducer(inputs: PassportInputs, offer: Offer) {
 
     const [countries, jobMatches] = yield* record(
       "match",
-      Effect.all([
-        Effect.all(
-          assessed.countries.map((assessment) =>
-            resilient(
-              "match",
-              explainCountry(
-                persona,
-                assessment,
-                visas.filter((visa) => visa.country === assessment.country),
-              ),
-            ).pipe(Effect.map((explanationJa) => ({ ...assessment, explanationJa }))),
+      Effect.all(
+        [
+          Effect.all(
+            assessed.countries.map((assessment) =>
+              resilient(
+                "match",
+                explainCountry(
+                  persona,
+                  assessment,
+                  visas.filter((visa) => visa.country === assessment.country),
+                ),
+              ).pipe(Effect.map((explanationJa) => ({ ...assessment, explanationJa }))),
+            ),
+            FAN_OUT,
           ),
-        ),
-        Effect.all(
-          assessed.matches.map((match) => {
-            const job = jobs.find((item) => item.id === match.jobId);
-            return job === undefined
-              ? Effect.fail(
-                  new PipelineError({
-                    messageJa: `求人 ${match.jobId} が見つかりません`,
-                    step: "match",
-                  }),
-                )
-              : resilient("match", explainJobMatch(persona, job, match)).pipe(
-                  Effect.map((reasonJa) => ({ ...match, reasonJa })),
-                );
-          }),
-        ),
-      ]),
+          Effect.all(
+            assessed.matches.map((match) => {
+              const job = jobs.find((item) => item.id === match.jobId);
+              return job === undefined
+                ? Effect.fail(
+                    new PipelineError({
+                      messageJa: `求人 ${match.jobId} が見つかりません`,
+                      step: "match",
+                    }),
+                  )
+                : resilient("match", explainJobMatch(persona, job, match)).pipe(
+                    Effect.map((reasonJa) => ({ ...match, reasonJa })),
+                  );
+            }),
+            FAN_OUT,
+          ),
+        ],
+        FAN_OUT,
+      ),
     );
 
     const result: PassportResult = {
@@ -200,14 +242,8 @@ function liveProducer(inputs: PassportInputs, offer: Offer) {
 
     yield* offer({ _tag: "Completed", result });
   }).pipe(
-    Effect.catchAll((error) =>
-      offer({
-        _tag: "Failed",
-        messageJa:
-          error instanceof PipelineError ? error.messageJa : "パイプラインの実行に失敗しました",
-        step: error instanceof PipelineError ? error.step : "unknown",
-      }),
-    ),
+    Effect.timeout(TOTAL_BUDGET),
+    Effect.catchAll((error) => offer(failureEvent(error))),
   );
 }
 
