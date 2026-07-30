@@ -26,17 +26,20 @@ export function usePipelineReplay({ timings }: Record<"timings", readonly StepTi
   const [elapsedSteps, setElapsedSteps] = useState(0);
 
   useEffect(() => {
-    if (timings.length === 0) return;
-
     const handles: ReturnType<typeof setTimeout>[] = [];
-    let elapsedMs = 0;
 
-    STEP_ORDER.forEach((step, index) => {
-      const measured = timings.find((timing) => timing.step === step);
-      elapsedMs += clampReplayMs(measured?.durationMs ?? 0);
-      handles.push(setTimeout(() => setElapsedSteps(index + 1), elapsedMs));
-    });
+    if (timings.length > 0) {
+      let elapsedMs = 0;
 
+      STEP_ORDER.forEach((step, index) => {
+        const measured = timings.find((timing) => timing.step === step);
+        elapsedMs += clampReplayMs(measured?.durationMs ?? 0);
+        handles.push(setTimeout(() => setElapsedSteps(index + 1), elapsedMs));
+      });
+    }
+
+    // Declared before the branch and returned unconditionally, so no code path can leave this
+    // effect with a timer un-cleared.
     return () => {
       for (const handle of handles) clearTimeout(handle);
     };

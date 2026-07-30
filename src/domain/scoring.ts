@@ -19,7 +19,10 @@ const ADJACENT_GENRE_FIT = 0.5;
 export function scoreJobMatch(persona: Persona, job: Job): JobMatch {
   const notesJa: string[] = [];
 
-  const matchedSkills = job.requiredSkills.filter((skill) => persona.skills.includes(skill));
+  // Built once per call, then a constant-time lookup per required skill, rather than rescanning
+  // the persona's skill list for each one.
+  const personaSkills = new Set(persona.skills);
+  const matchedSkills = job.requiredSkills.filter((skill) => personaSkills.has(skill));
   const skillFit = matchedSkills.length / job.requiredSkills.length;
   if (skillFit < 1) {
     const missingCount = job.requiredSkills.length - matchedSkills.length;

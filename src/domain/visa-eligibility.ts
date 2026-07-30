@@ -4,6 +4,7 @@ import type {
   Grade,
   Job,
   Persona,
+  SkillId,
   VisaAssessment,
   VisaRequirement,
 } from "~/data/schemas";
@@ -40,21 +41,33 @@ const LANGUAGE_REFERENCE_RANK = languageRank("business");
  * it is a soft factor per docs/requirement.md, and gating on it would hide the language-gap story
  * behind an empty job list.
  */
-export function isAttainableJob(persona: Persona, job: Job): boolean {
+function isAttainableWithSkills(
+  personaSkills: ReadonlySet<SkillId>,
+  experienceYears: number,
+  job: Job,
+): boolean {
   return (
-    persona.experienceYears >= job.minExperienceYears &&
-    job.requiredSkills.some((skill) => persona.skills.includes(skill))
+    experienceYears >= job.minExperienceYears &&
+    job.requiredSkills.some((skill) => personaSkills.has(skill))
   );
 }
 
-/** Highest monthly salary the persona could actually reach in this country, 0 if none. */
+export function isAttainableJob(persona: Persona, job: Job): boolean {
+  return isAttainableWithSkills(new Set(persona.skills), persona.experienceYears, job);
+}
+
+/**
+ * Highest monthly salary the persona could actually reach in this country, 0 if none. Takes the
+ * skill set pre-built, so scanning every job in a country builds it once rather than per job.
+ */
 function bestAttainableMonthly(
-  persona: Persona,
+  personaSkills: ReadonlySet<SkillId>,
+  experienceYears: number,
   countryJobs: readonly Job[],
   requiresSponsor: boolean,
 ): number {
   return countryJobs.reduce((best, job) => {
-    if (!isAttainableJob(persona, job)) return best;
+    if (!isAttainableWithSkills(personaSkills, experienceYears, job)) return best;
     if (requiresSponsor && !job.sponsorshipAvailable) return best;
     return Math.max(best, toMonthlyAmount(job.salary));
   }, 0);
@@ -71,8 +84,11 @@ export function assessVisa(
 ): VisaAssessment {
   const blockedReasonsJa: string[] = [];
 
+  const personaSkills = new Set(persona.skills);
   const hasSponsoringJob = countryJobs.some(
-    (job) => job.sponsorshipAvailable && isAttainableJob(persona, job),
+    (job) =>
+      job.sponsorshipAvailable &&
+      isAttainableWithSkills(personaSkills, persona.experienceYears, job),
   );
   if (visa.requiresSponsor && !hasSponsoringJob) {
     blockedReasonsJa.push(
@@ -100,7 +116,12 @@ export function assessVisa(
     );
   }
 
-  const bestMonthly = bestAttainableMonthly(persona, countryJobs, visa.requiresSponsor);
+  const bestMonthly = bestAttainableMonthly(
+    personaSkills,
+    persona.experienceYears,
+    countryJobs,
+    visa.requiresSponsor,
+  );
   if (visa.minSalary !== undefined) {
     const floorMonthly = toMonthlyAmount(visa.minSalary);
     if (bestMonthly < floorMonthly) {
