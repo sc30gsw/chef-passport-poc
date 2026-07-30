@@ -22,3 +22,35 @@ Not part of `vp check`. Use `vp run` so installs stay routed through Vite+.
 
 - **Fallow** (`vp run fallow`) — unused files, dependencies, and exports. Use when trimming deps or refactoring entry points (`.fallowrc.json` configures the project).
 - **react-doctor** (`vp run doctor`) — React-focused health checks. The script uses `--no-lint`; keep ordinary linting on `vp lint`.
+
+## Project rules
+
+Stack-specific conventions live in `.claude/rules/`. Read the ones matching the files you are touching.
+
+| Rule | Covers |
+| --- | --- |
+| `common/coding-style.md` | Naming, immutability, file size, lint-backed bans, comment policy |
+| `common/development-workflow.md` | `vp` commands, forbidden alternatives, `minimumReleaseAge`, PR pre-check |
+| `common/security.md` | `.env*` handling, server-only env vars, input validation, public-demo abuse guard |
+| `common/testing.md` | TDD via `vite-plus/test`, Effect helper, jsdom + Testing Library, server-fn mock, pinned coverage provider |
+| `typescript/project-structure.md` | bulletproof-react layout, `~/` alias, unidirectional imports, `domain/` + `data/` layers |
+| `typescript/react-conventions.md` | Named exports, function declarations, Utility-type props, react-compiler |
+| `typescript/effect-patterns.md` | Effect 3.22 tagged errors, Service/Layer boundaries, retry/fallback, serialization boundary |
+| `typescript/effect-schema.md` | `effect/Schema` as the only validator, decode boundaries, cache contract test |
+| `web/mantine-tailwind.md` | Mantine 9 + `tailwind-preset-mantine`, CSS layer rules, `@mantine/hooks` hazards |
+| `web/tanstack-start.md` | Server functions, streaming, Vercel deploy via Nitro, Node-side scripts |
+| `web/ai-pipeline.md` | The deterministic/LLM boundary, `@effect/ai` usage, AI Gateway routing, committed cache |
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues (`sc30gsw/chef-passport-poc`), managed via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage roles, using the default label strings. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context — one `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
