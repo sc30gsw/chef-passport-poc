@@ -43,7 +43,9 @@ Stack-specific conventions live in `.claude/rules/`. Read the ones matching the 
 
 ## Current implementation state
 
-This repo is currently a bare Vite+/TanStack Start scaffold — `src/domain/`, `src/data/`, `src/features/`, and `src/lib/` don't exist yet, and `package.json` has none of `@mantine/core`, `effect`, or `@effect/ai`. `.claude/rules/` and `docs/requirement.md` describe the **target architecture** for the Chef Passport PoC, not code that already exists. Add the dependency before importing from it.
+The bulletproof-react layout from `typescript/project-structure.md` is in place — `src/domain/`, `src/data/`, `src/features/`, and `src/lib/` all exist and are populated — and `package.json` pins `@mantine/core`, `effect`, `@effect/ai`, and `@effect/ai-anthropic`. `.claude/rules/` and `docs/requirement.md` describe the architecture this code already follows, not a future target. A test suite exists and `vp test` is green.
+
+This section intentionally does not enumerate what's built or what's left — that goes stale the moment another issue lands. For current status, in-flight work, and what's still missing, check the issue tracker (map issue #2) rather than this file.
 
 ## Agent skills
 
