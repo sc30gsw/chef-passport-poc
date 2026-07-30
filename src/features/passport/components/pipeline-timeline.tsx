@@ -1,16 +1,19 @@
 import { Loader, Paper, Text, ThemeIcon, Title } from "@mantine/core";
 
-import type { StepTiming } from "~/data/schemas";
-import { usePipelineReplay } from "~/features/passport/hooks/use-pipeline-replay";
 import { STEP_LABELS_JA, STEP_ORDER } from "~/features/passport/types/pipeline-event";
+import type { PipelineRunState } from "~/features/passport/utils/pipeline-run-state";
 
 /**
  * Screen 2 — the quiet lead. It shows what the system asks the model to do and what it decides
  * itself, which is the design argument the whole demo is making.
+ *
+ * Purely presentational, and deliberately so: progress arrives as `PipelineRunState`, which cached
+ * replay and live streaming both produce, so this component never learns which one is driving it.
  */
-export function PipelineTimeline({ timings }: Record<"timings", readonly StepTiming[]>) {
-  const { completedCount } = usePipelineReplay({ timings });
-
+export function PipelineTimeline({
+  completedCount,
+  timings,
+}: Pick<PipelineRunState, "completedCount" | "timings">) {
   return (
     <Paper withBorder p="lg" radius="md">
       <Title order={2} size="h4" mb="md">

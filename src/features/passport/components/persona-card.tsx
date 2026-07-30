@@ -5,8 +5,16 @@ import type { Persona } from "~/data/schemas";
 import { LANGUAGE_LABELS_JA } from "~/domain/language-level";
 import { GENRE_LABELS_JA } from "~/features/passport/utils/labels";
 
-/** Screen 1. The interviewer picks one, which turns the demo into a conversation. */
-export function PersonaCard({ persona }: Record<"persona", Persona>) {
+/**
+ * Screen 1. The interviewer picks one, which turns the demo into a conversation.
+ *
+ * `live` comes from the screen-wide toggle and rides along in the link's search params, so the mode
+ * survives a reload or a shared URL instead of living only in this page's memory.
+ */
+export function PersonaCard({
+  live,
+  persona,
+}: Record<"live", boolean> & Record<"persona", Persona>) {
   return (
     <Card withBorder padding="lg" radius="md" component="article">
       <Stack gap="xs">
@@ -41,7 +49,12 @@ export function PersonaCard({ persona }: Record<"persona", Persona>) {
           fullWidth
           mt="sm"
           renderRoot={(props) => (
-            <Link {...props} to="/passport/$personaId" params={{ personaId: persona.id }} />
+            <Link
+              {...props}
+              to="/passport/$personaId"
+              params={{ personaId: persona.id }}
+              search={{ live }}
+            />
           )}
         >
           {persona.name}で判定する

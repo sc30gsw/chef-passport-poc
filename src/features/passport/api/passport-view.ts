@@ -5,6 +5,7 @@ import type { ChefDataError } from "~/data/loaders";
 import { loadJobs, loadPersona, loadSkillVocabulary, loadVisaRequirements } from "~/data/loaders";
 import type { PassportPipeline, PipelineError } from "~/features/passport/api/pipeline-service";
 import { runPassportPipeline } from "~/features/passport/api/pipeline-service";
+import { joinPassportView } from "~/features/passport/utils/join-passport-view";
 
 /** Both failure types carry a Japanese sentence of their own; only a defect gets the generic one. */
 function failureMessageJa(personaId: string, cause: Cause.Cause<ChefDataError | PipelineError>) {
@@ -47,36 +48,12 @@ export async function loadPassportView(personaId: string, pipeline: Layer.Layer<
     return { message: failureMessageJa(personaId, exit.cause), ok: false as const };
   }
 
-  const { jobs, persona, result, visas, vocabulary } = exit.value;
-  const jobById = new Map(jobs.map((job) => [job.id, job]));
-
-  return {
-    data: {
-      countries: result.countries.map((country) => ({
-        ...country,
-        visaRequirements: visas.filter((visa) => visa.country === country.country),
-      })),
-      excludedJobs: result.excludedJobs.flatMap((excluded) => {
-        const job = jobById.get(excluded.jobId);
-        return job === undefined ? [] : [{ job, reasonJa: excluded.reasonJa }];
-      }),
-      jobMatches: result.jobMatches.flatMap((match) => {
-        const job = jobById.get(match.jobId);
-        return job === undefined ? [] : [{ job, match }];
-      }),
-      persona,
-      proseSource: result.proseSource,
-      skillSet: result.skillSet,
-      timings: result.timings,
-      translatedSkills: result.translatedSkills,
-      vocabulary,
-    },
-    ok: true as const,
-  };
+  return { data: joinPassportView(exit.value), ok: true as const };
 }
 
-/** The successful payload, derived so the components cannot drift from what the loader returns. */
-export type PassportView = Extract<
-  Awaited<ReturnType<typeof loadPassportView>>,
-  { ok: true }
->["data"];
+/**
+ * Re-exported so components keep one import path for the payload. The join itself lives in
+ * `~/features/passport/utils/join-passport-view`, because the live path joins the streamed result
+ * in the browser and must not reach into this module's Effect and data-loading imports.
+ */
+export type { PassportView } from "~/features/passport/utils/join-passport-view";

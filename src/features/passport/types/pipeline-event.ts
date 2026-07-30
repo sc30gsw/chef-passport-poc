@@ -15,7 +15,7 @@ import { PassportResult, PipelineStep } from "~/data/schemas";
  *
  * Absent means the run did what the caller asked, which is the only silent case.
  */
-export const PipelineDegradation = Schema.Struct({
+const PipelineDegradation = Schema.Struct({
   messageJa: Schema.String,
   reason: Schema.Literal("live-failed", "no-key", "in-flight"),
 });
