@@ -2,6 +2,7 @@ import { Alert, Stack } from "@mantine/core";
 import { Effect } from "effect";
 
 import { loadJobs, loadVisaRequirements } from "~/data/loaders";
+import { generatePassportServer } from "~/features/passport/api/generate-passport-server";
 import { PassportDashboard } from "~/features/passport/components/passport-dashboard";
 import { PipelineTimeline } from "~/features/passport/components/pipeline-timeline";
 import { usePipelineStream } from "~/features/passport/hooks/use-pipeline-stream";
@@ -16,9 +17,18 @@ import { joinPassportView } from "~/features/passport/utils/join-passport-view";
  * Jobs and visas are re-joined here from the same bundled JSON the picker already loads, so the
  * streamed `PassportResult` reaches the dashboard through the same join the loader uses.
  */
+const TRANSPORT_FAILURE_JA = "ライブ生成に接続できませんでした。事前生成キャッシュを表示します。";
+
+/** Module-level so its identity is stable: the hook keys its effect on `open` and the request. */
+function openPresetStream(personaId: string) {
+  return generatePassportServer({ data: { live: true, personaId } });
+}
+
 export function LivePassport({ fallbackView }: Record<"fallbackView", PassportView>) {
   const { completedCount, degraded, failureJa, isComplete, result, timings } = usePipelineStream({
-    personaId: fallbackView.persona.id,
+    open: openPresetStream,
+    request: fallbackView.persona.id,
+    transportFailureJa: TRANSPORT_FAILURE_JA,
   });
 
   if (failureJa === undefined && !isComplete) {
