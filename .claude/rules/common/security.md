@@ -28,7 +28,10 @@ NEVER hardcode secrets, tokens, or credentials in source files.
 export const generatePassportServer = createServerFn().handler(async ({ data }) => {
   const client = AnthropicClient.layerConfig({
     apiKey: Config.redacted("AI_GATEWAY_API_KEY"),
-    apiUrl: Config.succeed(process.env.AI_GATEWAY_BASE_URL ?? "https://api.anthropic.com"),
+    // Default is the gateway, not api.anthropic.com: the key the owner sets is a Vercel AI
+    // Gateway key (`vck_…`), and sending it straight to api.anthropic.com gets a 401. See
+    // src/lib/ai-client.ts's DEFAULT_BASE_URL.
+    apiUrl: Config.succeed(process.env.AI_GATEWAY_BASE_URL ?? "https://ai-gateway.vercel.sh"),
   });
   // ...
 });
@@ -59,11 +62,18 @@ const resume = (rawData as { resume: string }).resume;
 
 ## Public-demo abuse guard
 
-Free-input mode calls a paid API from a public URL. All three guards are required:
+Free-input mode calls a paid API from a public URL. All three guards are required.
 
-1. **Feature flag** — free-input mode gated behind a server-side env flag, off by default. Preset personas run from the committed cache and work with the flag off.
+**Owner-approved 2026-07-30:** the earlier feature-flag guard is replaced by key-presence
+gating. `ENABLE_FREE_INPUT` is abolished — there is no separate flag to leave off by
+mistake, and no separate `.env.example` entry for it.
+
+1. **Server-side key-presence gating** — no feature flag. If `AI_GATEWAY_API_KEY` is
+   absent, preset personas still run cache-only and free input refuses with a typed
+   response instead of calling the gateway. Preset personas work with no key set.
 2. **Input length cap** — enforced in the schema, not only in the UI.
-3. **Spend ceiling** — a per-API-key budget set in the AI Gateway dashboard.
+3. **Spend ceiling** — a per-API-key budget set in the AI Gateway dashboard. Owner
+   confirmed this is set, 2026-07-30.
 
 ```typescript
 const MAX_RESUME_LENGTH = 2000;
