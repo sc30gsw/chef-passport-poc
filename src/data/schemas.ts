@@ -179,3 +179,43 @@ export const ExcludedJob = Schema.Struct({
   reasonJa: Schema.String,
 });
 export type ExcludedJob = Schema.Schema.Type<typeof ExcludedJob>;
+
+export const PipelineStep = Schema.Literal("extract", "visa", "translate", "match");
+export type PipelineStep = Schema.Schema.Type<typeof PipelineStep>;
+
+/** Measured, not invented: the generator records how long each step actually took. */
+export const StepTiming = Schema.Struct({
+  durationMs: Schema.Number,
+  step: PipelineStep,
+});
+export type StepTiming = Schema.Schema.Type<typeof StepTiming>;
+
+/** A country assessment plus the one thing the LLM contributes: the sentence. */
+export const CountryResult = Schema.Struct({
+  ...CountryAssessment.fields,
+  explanationJa: Schema.String,
+});
+export type CountryResult = Schema.Schema.Type<typeof CountryResult>;
+
+export const RankedJobMatch = Schema.Struct({
+  ...JobMatch.fields,
+  reasonJa: Schema.String,
+});
+export type RankedJobMatch = Schema.Schema.Type<typeof RankedJobMatch>;
+
+/**
+ * The whole pipeline output, and the shape of every file in `src/data/cache/`.
+ * `proseSource` records how the wording was produced — a cache file must never be able to
+ * pass deterministic fallback text off as model output.
+ */
+export const PassportResult = Schema.Struct({
+  countries: Schema.Array(CountryResult),
+  excludedJobs: Schema.Array(ExcludedJob),
+  jobMatches: Schema.Array(RankedJobMatch),
+  personaId: Schema.String,
+  proseSource: Schema.Literal("deterministic", "llm"),
+  skillSet: SkillSet,
+  timings: Schema.Array(StepTiming),
+  translatedSkills: Schema.Array(TranslatedSkill),
+});
+export type PassportResult = Schema.Schema.Type<typeof PassportResult>;
