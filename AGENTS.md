@@ -61,4 +61,6 @@ Single-context — one `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs
 
 ### Product spec
 
-PoC scope, the three demo personas, the three-screen demo flow, and the 25-hour/2-week time budget are defined in `docs/requirement.md` (Japanese). Read it before implementing new features or components.
+PoC scope, the three demo personas, and the three-screen demo flow are defined in `docs/requirement.md` (Japanese) — that file covers **what** to build. `PLAN.md` (English, repo root) covers **how**: the deterministic/LLM boundary, data schemas, grade and score rules, routes, test layers, env vars, and the five-issue breakdown. Read both before implementing new features or components; where they disagree, `PLAN.md` and `.claude/rules/` win.
+
+The 25-hour budget in earlier drafts is lifted — the only deadline is a 2026-08-09 code freeze.
