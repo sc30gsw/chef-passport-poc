@@ -1,6 +1,13 @@
-import { LanguageModel } from "@effect/ai";
-import type { Context } from "effect";
+import type { LanguageModel } from "@effect/ai";
 import { Effect, Layer, Schema } from "effect";
+
+import type { ModelRole } from "~/lib/model-roles";
+import {
+  EXTRACTION_MODEL,
+  ExtractionLanguageModel,
+  PROSE_MODEL,
+  ProseLanguageModel,
+} from "~/lib/model-roles";
 
 /**
  * Stub `LanguageModel` Layers. The real API is never called from a test — see
@@ -9,6 +16,10 @@ import { Effect, Layer, Schema } from "effect";
  *
  * `generateObject` is the only method the four steps use, so the stubs implement just that. The
  * cast is confined to this module rather than repeated in every test file.
+ *
+ * Every helper here fills **both** role tags with the same behaviour, because most tests are about
+ * the pipeline's shape and do not care which model answered. `splitModelLayer` is the exception:
+ * it is the one that distinguishes the two, and it is what proves the split.
  */
 type StubResponses = Readonly<Record<string, unknown>>;
 
@@ -18,12 +29,22 @@ type GenerateObjectOptions = {
   readonly schema?: Schema.Schema<unknown, unknown, never>;
 };
 
-function modelLayer(
-  generateObject: (options: GenerateObjectOptions) => Effect.Effect<{ value: unknown }, unknown>,
-) {
-  return Layer.succeed(LanguageModel.LanguageModel, {
-    generateObject,
-  } as unknown as Context.Tag.Service<LanguageModel.LanguageModel>);
+type GenerateObject = (
+  options: GenerateObjectOptions,
+) => Effect.Effect<{ value: unknown }, unknown>;
+
+function modelService(generateObject: GenerateObject) {
+  return { generateObject } as unknown as LanguageModel.Service;
+}
+
+/** What every helper below returns: both role tags filled, nothing else required. */
+export type StubModelLayer = Layer.Layer<ExtractionLanguageModel | ProseLanguageModel>;
+
+function modelLayer(generateObject: GenerateObject): StubModelLayer {
+  return Layer.merge(
+    Layer.succeed(ExtractionLanguageModel, modelService(generateObject)),
+    Layer.succeed(ProseLanguageModel, modelService(generateObject)),
+  );
 }
 
 /** Answers every step from a fixed table, keyed by the step's `objectName`. */
@@ -121,6 +142,58 @@ export function schemaCheckedModelLayer(byObjectName: StubResponses) {
     }),
     prompts,
   };
+}
+
+/**
+ * The one stub that tells the two roles apart. Each role answers with the gateway slug it stands
+ * for, so a test can assert which model a given step actually reached — the whole claim of the
+ * model split, and the only part of it observable without a network call.
+ */
+export function splitModelLayer(byObjectName: StubResponses) {
+  const calls: { modelId: string; objectName: string }[] = [];
+
+  const roleService = (role: ModelRole, modelId: string) =>
+    modelService(({ objectName }) => {
+      calls.push({ modelId, objectName: objectName ?? "" });
+      return Effect.succeed({ value: byObjectName[objectName ?? ""] });
+    });
+
+  return {
+    calls,
+    layer: Layer.merge(
+      Layer.succeed(ExtractionLanguageModel, roleService("extraction", EXTRACTION_MODEL)),
+      Layer.succeed(ProseLanguageModel, roleService("prose", PROSE_MODEL)),
+    ),
+  };
+}
+
+/**
+ * Fails a role's first `failures` calls and then recovers, so a test can prove the retry schedule
+ * covers the prose steps too rather than only the extraction the pipeline starts with.
+ */
+export function flakyRoleModelLayer(
+  role: ModelRole,
+  failures: number,
+  byObjectName: StubResponses,
+) {
+  let remaining = failures;
+
+  const flaky = modelService(({ objectName }) => {
+    if (remaining > 0) {
+      remaining -= 1;
+      return Effect.fail(new Error("transient"));
+    }
+
+    return Effect.succeed({ value: byObjectName[objectName ?? ""] });
+  });
+  const healthy = modelService(({ objectName }) =>
+    Effect.succeed({ value: byObjectName[objectName ?? ""] }),
+  );
+
+  return Layer.merge(
+    Layer.succeed(ExtractionLanguageModel, role === "extraction" ? flaky : healthy),
+    Layer.succeed(ProseLanguageModel, role === "prose" ? flaky : healthy),
+  );
 }
 
 /** Shaped for `sato-takumi`, but nothing in the pipeline is persona-specific about it. */

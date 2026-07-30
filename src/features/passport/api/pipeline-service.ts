@@ -14,6 +14,8 @@ import { extractSkills } from "~/features/passport/api/steps/extract-skills";
 import { translateSkills } from "~/features/passport/api/steps/translate-skills";
 import type { PipelineDegradation, PipelineEvent } from "~/features/passport/types/pipeline-event";
 import { STEP_LABELS_JA } from "~/features/passport/types/pipeline-event";
+import type { ModelRole } from "~/lib/model-roles";
+import { ExtractionLanguageModel, ProseLanguageModel } from "~/lib/model-roles";
 
 /**
  * One interface, two interchangeable implementations. This swap is the core design claim: preset
@@ -80,8 +82,27 @@ const STEP_FAILURE_JA = {
 } as const satisfies Record<PipelineStep, string>;
 
 /**
+ * The two models one run needs. Passed down as a plain value rather than resolved from context by
+ * each step: a step asks for `LanguageModel` and never learns which model answered, so the split
+ * stays a single decision made here instead of four opinions scattered across `steps/`.
+ */
+type PipelineModels = Record<ModelRole, LanguageModel.Service>;
+
+/**
+ * Binds one step to one role. `Effect.provideService` empties the step's context requirement, which
+ * is what lets `PassportPipeline`'s two methods keep returning a `Stream` with no `R` — the property
+ * the cache Layer has to match to stay substitutable.
+ */
+function onModel<A, E, R>(model: LanguageModel.Service, effect: Effect.Effect<A, E, R>) {
+  return Effect.provideService(effect, LanguageModel.LanguageModel, model);
+}
+
+/**
  * Every model call carries the same timeout and retry, and a step that still will not recover
  * becomes a typed `PipelineError` — which `liveProducer` turns into the in-band `Failed` event.
+ *
+ * `timeout` inside `retry` on purpose: the 30-second budget from closed decision #6 bounds each
+ * attempt, so a hung call is abandoned and retried rather than eating the whole run's budget.
  */
 function resilient<A, E, R>(step: PipelineStep, effect: Effect.Effect<A, E, R>) {
   return effect.pipe(
@@ -202,6 +223,7 @@ function assessAndExplain(
   skillSet: SkillSet,
   timings: StepTiming[],
   record: StepRecorder,
+  models: PipelineModels,
 ) {
   return Effect.gen(function* () {
     const { jobs, persona, visas, vocabulary } = inputs;
@@ -214,7 +236,10 @@ function assessAndExplain(
 
     const translatedSkills = yield* record(
       "translate",
-      resilient("translate", translateSkills(skillSet.skills, vocabulary)),
+      resilient(
+        "translate",
+        onModel(models.extraction, translateSkills(skillSet.skills, vocabulary)),
+      ),
     );
 
     const [countries, jobMatches] = yield* record(
@@ -225,10 +250,13 @@ function assessAndExplain(
             assessed.countries.map((assessment) =>
               resilient(
                 "match",
-                explainCountry(
-                  persona,
-                  assessment,
-                  visas.filter((visa) => visa.country === assessment.country),
+                onModel(
+                  models.prose,
+                  explainCountry(
+                    persona,
+                    assessment,
+                    visas.filter((visa) => visa.country === assessment.country),
+                  ),
                 ),
               ).pipe(Effect.map((explanationJa) => ({ ...assessment, explanationJa }))),
             ),
@@ -244,9 +272,10 @@ function assessAndExplain(
                       step: "match",
                     }),
                   )
-                : resilient("match", explainJobMatch(persona, job, match)).pipe(
-                    Effect.map((reasonJa) => ({ ...match, reasonJa })),
-                  );
+                : resilient(
+                    "match",
+                    onModel(models.prose, explainJobMatch(persona, job, match)),
+                  ).pipe(Effect.map((reasonJa) => ({ ...match, reasonJa })));
             }),
             FAN_OUT,
           ),
@@ -270,19 +299,22 @@ function assessAndExplain(
   });
 }
 
-function liveProducer(inputs: PassportInputs, offer: Offer) {
+function liveProducer(inputs: PassportInputs, offer: Offer, models: PipelineModels) {
   return Effect.gen(function* () {
     const timings: StepTiming[] = [];
     const record = makeRecorder(offer, timings);
 
     const skillSet = yield* record(
       "extract",
-      resilient("extract", extractSkills(inputs.persona.resumeJa, inputs.vocabulary)),
+      resilient(
+        "extract",
+        onModel(models.extraction, extractSkills(inputs.persona.resumeJa, inputs.vocabulary)),
+      ),
     );
 
     yield* offer({
       _tag: "Completed",
-      result: yield* assessAndExplain(inputs, skillSet, timings, record),
+      result: yield* assessAndExplain(inputs, skillSet, timings, record, models),
     });
   }).pipe(
     Effect.timeout(TOTAL_BUDGET),
@@ -306,7 +338,7 @@ const PROSE_FALLBACK: PipelineDegradation = {
  * judge and the run ends in `Failed`; if only the wording fails, the judgement survives and the run
  * completes with deterministic prose.
  */
-function freeInputProducer(inputs: FreeInputInputs, offer: Offer) {
+function freeInputProducer(inputs: FreeInputInputs, offer: Offer, models: PipelineModels) {
   return Effect.gen(function* () {
     const { jobs, profile, visas, vocabulary } = inputs;
     const timings: StepTiming[] = [];
@@ -314,7 +346,7 @@ function freeInputProducer(inputs: FreeInputInputs, offer: Offer) {
 
     const extracted = yield* record(
       "extract",
-      resilient("extract", extractSkills(profile.resume, vocabulary)),
+      resilient("extract", onModel(models.extraction, extractSkills(profile.resume, vocabulary))),
     );
 
     // The declared language level overrides the model's reading of it: it is a judgement input, so
@@ -328,7 +360,7 @@ function freeInputProducer(inputs: FreeInputInputs, offer: Offer) {
     };
 
     const explained = yield* Effect.option(
-      assessAndExplain(withPersona, skillSet, timings, record),
+      assessAndExplain(withPersona, skillSet, timings, record, models),
     );
 
     yield* offer(
@@ -347,22 +379,26 @@ function freeInputProducer(inputs: FreeInputInputs, offer: Offer) {
 }
 
 /**
- * Gateway-backed. `Layer.effect` resolves the model once and provides it into the Stream, which is
- * what keeps `PassportPipeline`'s interface free of a context requirement — the two Layers stay
- * substitutable precisely because the live one absorbs its own dependency here.
+ * Gateway-backed. `Layer.effect` resolves **both** models once and closes over them, which is what
+ * keeps `PassportPipeline`'s interface free of a context requirement — the two Layers stay
+ * substitutable precisely because the live one absorbs its own dependencies here. Two tags rather
+ * than one, because the two roles are two different models (see `~/lib/model-roles`); resolving
+ * them in the Layer rather than inside the steps is what keeps that a single decision.
  */
 export const PipelineLive = Layer.effect(
   PassportPipeline,
-  Effect.map(LanguageModel.LanguageModel, (model) => ({
-    run: (inputs: PassportInputs) =>
-      streamFrom((offer) => liveProducer(inputs, offer)).pipe(
-        Stream.provideService(LanguageModel.LanguageModel, model),
-      ),
-    runFreeInput: (inputs: FreeInputInputs) =>
-      streamFrom((offer) => freeInputProducer(inputs, offer)).pipe(
-        Stream.provideService(LanguageModel.LanguageModel, model),
-      ),
-  })),
+  Effect.gen(function* () {
+    const models: PipelineModels = {
+      extraction: yield* ExtractionLanguageModel,
+      prose: yield* ProseLanguageModel,
+    };
+
+    return {
+      run: (inputs: PassportInputs) => streamFrom((offer) => liveProducer(inputs, offer, models)),
+      runFreeInput: (inputs: FreeInputInputs) =>
+        streamFrom((offer) => freeInputProducer(inputs, offer, models)),
+    };
+  }),
 );
 
 /**

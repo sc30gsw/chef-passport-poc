@@ -124,6 +124,8 @@ vp dev
 
 モデルスラッグはプロバイダ接頭辞必須（`anthropic/claude-haiku-4.5`）。接頭辞なしだと 404 になります。
 
+抽出・翻訳は `anthropic/claude-haiku-4.5`、説明文（国・求人）は `anthropic/claude-sonnet-5`。各ロールはもう一方をゲートウェイのフォールバック先に指定しています。1 人ぶんのライブ生成はおよそ **7.5k 入力 / 2.2k 出力トークン ≒ $0.033**（見積り。内訳と前提は [`docs/adr/0002-ai-gateway-routing.md`](docs/adr/0002-ai-gateway-routing.md)）。
+
 ### Vercel へのデプロイ
 
 [`vercel.json`](vercel.json) で `framework: tanstack-start` を指定しています。自由入力を本番で使う場合のみ、上記と同じ変数名を**接頭辞なしで** Vercel のプロジェクト環境変数（ダッシュボード）に設定してください——コミットするのではなく、Vercel 側で管理します。`AI_GATEWAY_API_KEY` を設定しなければプリセットのみのデプロイになります。
@@ -145,7 +147,7 @@ src/
 ├── domain/        純関数 — visa-eligibility / scoring。Effect・React・AI なし
 ├── data/          スキーマ、JSON フィクスチャ、デコードするローダー、コミット済みキャッシュ
 ├── features/      passport/{api,components,hooks,types}
-├── lib/           runtime.ts（Layer 合成の単一地点）・ai-client.ts
+├── lib/           runtime.ts（Layer 合成の単一地点）・ai-client.ts・model-roles.ts（モデル分割）
 ├── routes/        薄いアダプタ: / · /passport/$personaId · /free
 └── testing/       setup、render helper、server-fn mock、itEffect
 scripts/           generate-passport.ts — 素の Node で実行

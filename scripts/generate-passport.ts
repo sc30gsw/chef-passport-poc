@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { Effect, Schema } from "effect";
+import { Effect, Layer, Schema } from "effect";
 
 import {
   Job,
@@ -15,7 +15,7 @@ import {
   PipelineLive,
   runPassportPipeline,
 } from "../src/features/passport/api/pipeline-service.ts";
-import { anthropicLayer, extractionModel } from "../src/lib/ai-client.ts";
+import { anthropicLayer, extractionModelLayer, proseModelLayer } from "../src/lib/ai-client.ts";
 
 /**
  * Regenerates the committed pipeline cache. Committed and re-runnable on purpose: it is the evidence
@@ -72,13 +72,14 @@ const personas = PERSONA_IDS.map((id) =>
  * The Layer stack is composed here rather than taken from `src/lib/runtime.ts` for a reason that is
  * not a preference: this file runs under plain Node, where the `~/` alias does not resolve and the
  * statically imported cache JSON that `runtime.ts` pulls in cannot be loaded. The *consumption* is
- * shared even though the composition cannot be.
+ * shared even though the composition cannot be — including the model split, so a regenerated cache
+ * carries sonnet-5 prose exactly as a live run would.
  */
 function generateLive(persona: Persona): Promise<PassportResult> {
   return Effect.runPromise(
     runPassportPipeline({ jobs, persona, visas, vocabulary }).pipe(
       Effect.provide(PipelineLive),
-      Effect.provide(extractionModel()),
+      Effect.provide(Layer.merge(extractionModelLayer(), proseModelLayer())),
       Effect.provide(anthropicLayer()),
     ) as Effect.Effect<PassportResult, Error>,
   );

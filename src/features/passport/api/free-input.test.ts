@@ -1,4 +1,3 @@
-import type { LanguageModel } from "@effect/ai";
 import { Layer, Schema } from "effect";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
@@ -9,6 +8,7 @@ import { generateFreePassportServer } from "~/features/passport/api/free-input-s
 import { PipelineLive } from "~/features/passport/api/pipeline-service";
 import { FreeInputRequest, MAX_RESUME_LENGTH } from "~/features/passport/types/free-input-request";
 import { PipelineEvent } from "~/features/passport/types/pipeline-event";
+import type { StubModelLayer } from "~/testing/stub-language-model";
 import {
   STUB_RESPONSES,
   countingModelLayer,
@@ -40,14 +40,11 @@ const BASE_REQUEST = {
   resume: RESUME,
 } as const;
 
-function liveLayer(model: Layer.Layer<LanguageModel.LanguageModel>): FreeInputLayers["live"] {
+function liveLayer(model: StubModelLayer): FreeInputLayers["live"] {
   return () => PipelineLive.pipe(Layer.provide(model));
 }
 
-async function collect(
-  request: typeof BASE_REQUEST | FreeInputRequest,
-  model: Layer.Layer<LanguageModel.LanguageModel>,
-) {
+async function collect(request: typeof BASE_REQUEST | FreeInputRequest, model: StubModelLayer) {
   const received: PipelineEvent[] = [];
 
   for await (const event of streamFreeInputEvents(request, { live: liveLayer(model) })) {

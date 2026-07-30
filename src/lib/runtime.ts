@@ -2,7 +2,7 @@ import { Layer } from "effect";
 
 import { lookupCachedPassport } from "~/data/cache-index";
 import { PipelineLive, pipelineFromCache } from "~/features/passport/api/pipeline-service";
-import { anthropicLayer, extractionModel } from "~/lib/ai-client";
+import { anthropicLayer, extractionModelLayer, proseModelLayer } from "~/lib/ai-client";
 
 /**
  * The single Layer composition point. Layers cannot live inside a feature — this module sits above
@@ -36,7 +36,14 @@ export function passportPipelineFromCache(options: Partial<Record<"paced", boole
  * Whether it is built at all is decided by `~/lib/gateway-key`. There is no feature flag: the owner
  * abolished `ENABLE_FREE_INPUT` on 2026-07-30 in favour of gating on the key alone.
  * See .claude/rules/common/security.md.
+ *
+ * Two model Layers, one client: haiku-4.5 for the structural steps, sonnet-5 for the prose. Both
+ * are built on the same `AnthropicClient`, so the split costs one extra Layer and no extra
+ * connection. See `~/lib/model-roles`.
  */
 export function passportPipelineLive() {
-  return PipelineLive.pipe(Layer.provide(extractionModel()), Layer.provide(anthropicLayer()));
+  return PipelineLive.pipe(
+    Layer.provide(Layer.merge(extractionModelLayer(), proseModelLayer())),
+    Layer.provide(anthropicLayer()),
+  );
 }

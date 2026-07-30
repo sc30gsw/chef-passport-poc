@@ -13,10 +13,13 @@ import {
   runPassportPipeline,
 } from "~/features/passport/api/pipeline-service";
 import type { PipelineEvent } from "~/features/passport/types/pipeline-event";
+import { EXTRACTION_MODEL, PROSE_MODEL } from "~/lib/model-roles";
 import {
   STUB_RESPONSES,
   failingModelLayer,
   flakyModelLayer,
+  flakyRoleModelLayer,
+  splitModelLayer,
   stubModelLayer,
 } from "~/testing/stub-language-model";
 
@@ -213,5 +216,76 @@ describe("PipelineLive（スタブモデル）", () => {
     expect(last?._tag).toBe("Failed");
     expect(last?._tag === "Failed" ? last.step : "").toBe("extract");
     expect(last?._tag === "Failed" ? last.messageJa : "").toBe("スキル抽出の生成に失敗しました");
+  });
+});
+
+/**
+ * リトライはゲートウェイの機能ではなく自前実装（Schedule.recurs(2)）なので、上限そのものを固定する。
+ * 2回までは吸収し、3回目は諦める——この境界が動くと「一時的な失敗に強い」という主張が崩れる。
+ */
+describe("PipelineLive のリトライ上限", () => {
+  it("2回までの一時的な失敗は吸収される（初回 + リトライ2回）", async () => {
+    const events = await collect(
+      PipelineLive.pipe(Layer.provide(flakyModelLayer(2, STUB_RESPONSES))),
+    );
+
+    expect(events.at(-1)?._tag).toBe("Completed");
+  });
+
+  it("3回連続で失敗したら諦めて Failed になる", async () => {
+    const events = await collect(
+      PipelineLive.pipe(Layer.provide(flakyModelLayer(3, STUB_RESPONSES))),
+    );
+
+    expect(events.at(-1)?._tag).toBe("Failed");
+  });
+
+  it("説明文モデルだけが一時的に落ちても、同じリトライで回復する", async () => {
+    const events = await collect(
+      PipelineLive.pipe(Layer.provide(flakyRoleModelLayer("prose", 1, STUB_RESPONSES))),
+    );
+    const last = events.at(-1);
+
+    expect(last?._tag).toBe("Completed");
+    expect(last?._tag === "Completed" ? last.result.proseSource : "").toBe("llm");
+  });
+});
+
+/**
+ * モデル分割の証拠。ロールごとに別サービスを差し込み、各ステップがどちらのスラッグに届いたかを
+ * 記録する。実際のゲートウェイ応答（providerMetadata.modelAttempts[]）は #11 の実機確認の担当で、
+ * ここで固定できるのは「どのステップがどのモデルを引いたか」までになる。
+ */
+describe("PipelineLive のモデル分割", () => {
+  const STRUCTURAL_STEPS = ["skillSet", "translations"];
+  const PROSE_STEPS = ["countryExplanation", "jobMatchReason"];
+
+  async function recordCalls() {
+    const model = splitModelLayer(STUB_RESPONSES);
+    await collect(PipelineLive.pipe(Layer.provide(model.layer)));
+
+    return model.calls;
+  }
+
+  it("抽出と翻訳は haiku-4.5 に届く", async () => {
+    const structural = (await recordCalls()).filter((call) =>
+      STRUCTURAL_STEPS.includes(call.objectName),
+    );
+
+    expect(structural).not.toHaveLength(0);
+    expect(structural.every((call) => call.modelId === EXTRACTION_MODEL)).toBe(true);
+  });
+
+  it("国の説明文と求人の理由文は sonnet-5 に届く", async () => {
+    const prose = (await recordCalls()).filter((call) => PROSE_STEPS.includes(call.objectName));
+
+    expect(prose).not.toHaveLength(0);
+    expect(prose.every((call) => call.modelId === PROSE_MODEL)).toBe(true);
+  });
+
+  it("4種類のLLMステップがすべてどちらかのモデルに割り当てられている", async () => {
+    const objectNames = new Set((await recordCalls()).map((call) => call.objectName));
+
+    expect(objectNames).toStrictEqual(new Set([...STRUCTURAL_STEPS, ...PROSE_STEPS]));
   });
 });

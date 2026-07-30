@@ -1,4 +1,3 @@
-import type { LanguageModel } from "@effect/ai";
 import { Layer, Schema } from "effect";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
@@ -8,6 +7,7 @@ import { streamPassportEvents } from "~/features/passport/api/generate-passport"
 import { PipelineLive, pipelineFromCache } from "~/features/passport/api/pipeline-service";
 import { presetSingleFlight } from "~/features/passport/api/single-flight";
 import { PipelineEvent } from "~/features/passport/types/pipeline-event";
+import type { StubModelLayer } from "~/testing/stub-language-model";
 import {
   STUB_RESPONSES,
   countingModelLayer,
@@ -22,17 +22,11 @@ const decodeEvent = Schema.decodeUnknownSync(PipelineEvent);
 const cacheLayer: PassportPipelineLayers["cache"] = () =>
   pipelineFromCache(lookupCachedPassport, { paced: false });
 
-function liveLayer(
-  model: Layer.Layer<LanguageModel.LanguageModel>,
-): PassportPipelineLayers["live"] {
+function liveLayer(model: StubModelLayer): PassportPipelineLayers["live"] {
   return () => PipelineLive.pipe(Layer.provide(model));
 }
 
-async function collect(
-  personaId: string,
-  live: boolean,
-  model: Layer.Layer<LanguageModel.LanguageModel>,
-) {
+async function collect(personaId: string, live: boolean, model: StubModelLayer) {
   const received: PipelineEvent[] = [];
 
   for await (const event of streamPassportEvents(
