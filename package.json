@@ -10,6 +10,7 @@
     "doctor": "vp exec react-doctor . --verbose --yes --no-lint",
     "fallow": "vp exec fallow dead-code",
     "fix": "vp check --fix",
+    "generate:passport": "node --env-file-if-exists=.env scripts/generate-passport.ts",
     "preview": "vp preview",
     "test": "vp test",
     "type-check": "vp check --no-lint"

@@ -17,7 +17,16 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+
+    /* `scripts/` runs under plain Node, which requires explicit .ts specifiers */
+    "allowImportingTsExtensions": true,
+
+    /* No `baseUrl`: oxlint's TypeScript checker rejects it (tsgolint#351), so `paths`
+       entries must be relative. `vite.config.ts` mirrors this in `resolve.alias`. */
+    "paths": {
+      "~/*": ["./src/*"]
+    }
   },
-  "include": ["src", "*.config.ts"]
+  "include": ["src", "scripts", "*.config.ts"]
 }
