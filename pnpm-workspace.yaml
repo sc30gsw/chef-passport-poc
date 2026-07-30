@@ -16,4 +16,5 @@ onlyBuiltDependencies:
 minimumReleaseAge: 1440
 
 allowBuilds:
+  esbuild: set this to true or false
   msgpackr-extract: false
