@@ -48,7 +48,10 @@ Validate every external input at the boundary with `effect/Schema`. See [../type
 
 ```typescript
 // CORRECT
-const input = yield * Schema.decodeUnknown(FreeInputRequest)(rawData);
+const program = Effect.gen(function* () {
+  const input = yield* Schema.decodeUnknown(FreeInputRequest)(rawData);
+  return yield* runPassportPipeline(input);
+});
 
 // WRONG
 const resume = (rawData as { resume: string }).resume;

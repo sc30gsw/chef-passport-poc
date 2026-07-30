@@ -21,22 +21,23 @@ alwaysApply: true
 
 ```typescript
 // CORRECT: score first, then ask for prose about the result
-const score = scoreJobMatch(skills, job);
-const reason =
-  yield *
-  LanguageModel.generateObject({
+const explain = Effect.gen(function* () {
+  const score = scoreJobMatch(skills, job);
+  const reason = yield* LanguageModel.generateObject({
     objectName: "reason",
     prompt: reasonPrompt(job, score),
     schema: MatchReason,
   });
+  return { reason: reason.value, score };
+});
 
 // WRONG: the model decides the score
-const graded =
-  yield *
-  LanguageModel.generateObject({
+const graded = Effect.gen(function* () {
+  return yield* LanguageModel.generateObject({
     prompt: "Score these 15 jobs 0-100",
     schema: ScoredJobs,
   });
+});
 ```
 
 Hard constraints (sponsorship unavailable, age over the cap, salary below the visa floor) **exclude** rather than subtract, and the exclusion reason is shown in the UI. That display is the visible proof the logic exists.

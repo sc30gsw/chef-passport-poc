@@ -65,8 +65,8 @@ export class PassportPipeline extends Context.Tag("PassportPipeline")<
 >() {}
 
 // two interchangeable implementations — the source swaps, the interface does not
-export const PipelineLive = Layer.effect(PassportPipeline /* live AI */);
-export const PipelineFromCache = Layer.succeed(PassportPipeline /* replay committed JSON */);
+export const PipelineLive = Layer.effect(PassportPipeline, makeLivePipeline);
+export const PipelineFromCache = Layer.succeed(PassportPipeline, makeCachePipeline);
 ```
 
 This swap is the core design claim of the project. Preset personas and free input run the **same** `Stream<PipelineEvent>`; only the Layer differs.

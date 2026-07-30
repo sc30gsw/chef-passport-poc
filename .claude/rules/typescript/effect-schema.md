@@ -46,7 +46,9 @@ Three boundaries here require a decode: static JSON load, committed cache load, 
 
 ```typescript
 // CORRECT
-const visas = yield * Schema.decodeUnknown(Schema.Array(VisaRequirement))(rawJson);
+const loadVisas = Effect.gen(function* () {
+  return yield* Schema.decodeUnknown(Schema.Array(VisaRequirement))(rawJson);
+});
 
 // WRONG: a cast is not validation
 const visas = rawJson as VisaRequirement[];
@@ -59,14 +61,14 @@ const visas = rawJson as VisaRequirement[];
 `LanguageModel.generateObject` takes a `Schema` directly and returns the parsed value in `.value`. Reuse the same schema the rest of the app decodes with — a mismatch between the LLM output schema and the domain schema is how the committed cache silently goes stale.
 
 ```typescript
-const result =
-  yield *
-  LanguageModel.generateObject({
+const extract = Effect.gen(function* () {
+  const result = yield* LanguageModel.generateObject({
     objectName: "skillSet",
     prompt,
     schema: SkillSet,
   });
-result.value; // Schema.Schema.Type<typeof SkillSet>
+  return result.value; // Schema.Schema.Type<typeof SkillSet>
+});
 ```
 
 ## Cache contract test
