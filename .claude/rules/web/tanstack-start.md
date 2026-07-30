@@ -1,6 +1,7 @@
 ---
 description: TanStack Start conventions — server functions, streaming, Vercel deploy via Nitro, Node-side scripts
-globs: ["src/routes/**/*.{ts,tsx}", "src/features/**/*-server.ts", "scripts/**/*.ts", "vite.config.ts"]
+globs:
+  ["src/routes/**/*.{ts,tsx}", "src/features/**/*-server.ts", "scripts/**/*.ts", "vite.config.ts"]
 alwaysApply: true
 ---
 

@@ -36,12 +36,12 @@ export function itEffect(name: string, self: Effect.Effect<unknown, unknown, nev
 
 ## Four test layers
 
-| Layer | Target | Notes |
-| --- | --- | --- |
-| Pure functions | `src/domain/**` | No harness. Highest value — this is what makes deterministic scoring defensible |
-| Effect services | `src/features/*/api/**` | Provide a stub `LanguageModel` Layer; never call the real API |
-| Components | `src/features/*/components/**` | jsdom + Testing Library |
-| Server functions | `src/features/*/api/*-server.ts` | See the mock pattern below |
+| Layer            | Target                           | Notes                                                                           |
+| ---------------- | -------------------------------- | ------------------------------------------------------------------------------- |
+| Pure functions   | `src/domain/**`                  | No harness. Highest value — this is what makes deterministic scoring defensible |
+| Effect services  | `src/features/*/api/**`          | Provide a stub `LanguageModel` Layer; never call the real API                   |
+| Components       | `src/features/*/components/**`   | jsdom + Testing Library                                                         |
+| Server functions | `src/features/*/api/*-server.ts` | See the mock pattern below                                                      |
 
 Pure-function coverage is non-negotiable: the project claims visa eligibility and job scoring are deterministic, and tests are the evidence.
 

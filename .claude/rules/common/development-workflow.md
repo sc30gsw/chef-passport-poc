@@ -10,19 +10,19 @@ alwaysApply: false
 
 All development operations go through **`vp`** (Vite+). Never call `pnpm`, `npm`, or `yarn` directly.
 
-| Command                    | Purpose                                          |
-| -------------------------- | ------------------------------------------------ |
-| `vp dev`                   | Dev server                                       |
-| `vp build`                 | Production build                                 |
-| `vp check`                 | Format + lint + typecheck (`--fix` to auto-fix)  |
-| `vp check --no-lint`       | Typecheck only                                   |
-| `vp test`                  | Run tests (bundled Vitest 4.1.9)                 |
-| `vp lint`                  | Lint only (oxlint)                               |
-| `vp add <pkg>`             | Add a dependency                                 |
-| `vp run fallow`            | Unused files / exports / dependencies            |
-| `vp run doctor`            | React health checks                              |
-| `vp run generate:passport` | Regenerate the pre-generated pipeline cache      |
-| `vp dlx <pkg>`             | One-off binary (instead of `npx` / `pnpm dlx`)   |
+| Command                    | Purpose                                         |
+| -------------------------- | ----------------------------------------------- |
+| `vp dev`                   | Dev server                                      |
+| `vp build`                 | Production build                                |
+| `vp check`                 | Format + lint + typecheck (`--fix` to auto-fix) |
+| `vp check --no-lint`       | Typecheck only                                  |
+| `vp test`                  | Run tests (bundled Vitest 4.1.9)                |
+| `vp lint`                  | Lint only (oxlint)                              |
+| `vp add <pkg>`             | Add a dependency                                |
+| `vp run fallow`            | Unused files / exports / dependencies           |
+| `vp run doctor`            | React health checks                             |
+| `vp run generate:passport` | Regenerate the pre-generated pipeline cache     |
+| `vp dlx <pkg>`             | One-off binary (instead of `npx` / `pnpm dlx`)  |
 
 ## Forbidden
 

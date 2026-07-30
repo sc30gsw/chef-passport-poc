@@ -23,7 +23,7 @@ alwaysApply: true
 
 The preset declares `@layer theme, base, mantine, components, utilities` and imports `@mantine/core/styles.layer.css`, so Preflight cannot clobber Mantine and Tailwind utilities always win.
 
-**Never import `@mantine/core/styles.css`.** Importing both it and `styles.layer.css` breaks specificity — an explicit Mantine warning. Additional Mantine packages must also use their `.layer.css` build, imported *after* the preset.
+**Never import `@mantine/core/styles.css`.** Importing both it and `styles.layer.css` breaks specificity — an explicit Mantine warning. Additional Mantine packages must also use their `.layer.css` build, imported _after_ the preset.
 
 `postcss-preset-mantine` is **not** required (Mantine documents it as optional authoring sugar). Leaving it out avoids any PostCSS interaction with `@tailwindcss/vite` and rolldown.
 

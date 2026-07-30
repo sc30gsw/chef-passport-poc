@@ -28,14 +28,14 @@ chef.languageLevel = "conversational";
 
 ## Naming
 
-| Target                   | Convention       | Example                            |
-| ------------------------ | ---------------- | ---------------------------------- |
-| Variables / fn           | lowerCamelCase   | `chefProfile`, `scoreJobMatch`     |
-| Components               | UpperCamelCase   | `PassportCard`, `PipelineTimeline` |
-| Types                    | UpperCamelCase   | `VisaRequirement`, `PipelineEvent` |
+| Target                   | Convention       | Example                             |
+| ------------------------ | ---------------- | ----------------------------------- |
+| Variables / fn           | lowerCamelCase   | `chefProfile`, `scoreJobMatch`      |
+| Components               | UpperCamelCase   | `PassportCard`, `PipelineTimeline`  |
+| Types                    | UpperCamelCase   | `VisaRequirement`, `PipelineEvent`  |
 | Effect services / Layers | UpperCamelCase   | `PassportPipeline`, `AnthropicLive` |
-| Constants                | UPPER_SNAKE_CASE | `MAX_RESUME_LENGTH`                |
-| Files                    | kebab-case       | `visa-eligibility.ts`              |
+| Constants                | UPPER_SNAKE_CASE | `MAX_RESUME_LENGTH`                 |
+| Files                    | kebab-case       | `visa-eligibility.ts`               |
 
 ## Lint-backed bans
 
@@ -47,7 +47,7 @@ chef.languageLevel = "conversational";
 
 ## Comments
 
-Comment *why*, not *what*. Two cases in this repo genuinely need one:
+Comment _why_, not _what_. Two cases in this repo genuinely need one:
 
 1. Values that will drift — currency rates, visa salary thresholds. State the source and capture date.
 2. Deliberate deviation from a convention — cite the reason, link the ADR.

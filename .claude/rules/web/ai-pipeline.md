@@ -10,29 +10,33 @@ alwaysApply: true
 
 ## The deterministic / LLM boundary — the core rule
 
-| Step | Implementation |
-| --- | --- |
-| 1. Extract and structure skills | **LLM** — `generateObject` against an `effect/Schema` |
-| 2. Visa eligibility | **Deterministic function** in `src/domain/` + LLM for the explanation text only |
-| 3. Translate skills to local kitchen vocabulary | **LLM** — `generateObject` |
-| 4. Job matching | **Deterministic score** in `src/domain/` + LLM for the reason text only |
+| Step                                            | Implementation                                                                  |
+| ----------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1. Extract and structure skills                 | **LLM** — `generateObject` against an `effect/Schema`                           |
+| 2. Visa eligibility                             | **Deterministic function** in `src/domain/` + LLM for the explanation text only |
+| 3. Translate skills to local kitchen vocabulary | **LLM** — `generateObject`                                                      |
+| 4. Job matching                                 | **Deterministic score** in `src/domain/` + LLM for the reason text only         |
 
 **Judgement is deterministic; only the wording is generated.** Never move a scoring or eligibility decision into a prompt — it is the project's central design claim and what the tests prove.
 
 ```typescript
 // CORRECT: score first, then ask for prose about the result
 const score = scoreJobMatch(skills, job);
-const reason = yield* LanguageModel.generateObject({
-  objectName: "reason",
-  prompt: reasonPrompt(job, score),
-  schema: MatchReason,
-});
+const reason =
+  yield *
+  LanguageModel.generateObject({
+    objectName: "reason",
+    prompt: reasonPrompt(job, score),
+    schema: MatchReason,
+  });
 
 // WRONG: the model decides the score
-const graded = yield* LanguageModel.generateObject({
-  prompt: "Score these 15 jobs 0-100",
-  schema: ScoredJobs,
-});
+const graded =
+  yield *
+  LanguageModel.generateObject({
+    prompt: "Score these 15 jobs 0-100",
+    schema: ScoredJobs,
+  });
 ```
 
 Hard constraints (sponsorship unavailable, age over the cap, salary below the visa floor) **exclude** rather than subtract, and the exclusion reason is shown in the UI. That display is the visible proof the logic exists.

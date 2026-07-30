@@ -27,19 +27,19 @@ Not part of `vp check`. Use `vp run` so installs stay routed through Vite+.
 
 Stack-specific conventions live in `.claude/rules/`. Read the ones matching the files you are touching.
 
-| Rule | Covers |
-| --- | --- |
-| `common/coding-style.md` | Naming, immutability, file size, lint-backed bans, comment policy |
-| `common/development-workflow.md` | `vp` commands, forbidden alternatives, `minimumReleaseAge`, PR pre-check |
-| `common/security.md` | `.env*` handling, server-only env vars, input validation, public-demo abuse guard |
-| `common/testing.md` | TDD via `vite-plus/test`, Effect helper, jsdom + Testing Library, server-fn mock, pinned coverage provider |
-| `typescript/project-structure.md` | bulletproof-react layout, `~/` alias, unidirectional imports, `domain/` + `data/` layers |
-| `typescript/react-conventions.md` | Named exports, function declarations, Utility-type props, react-compiler |
-| `typescript/effect-patterns.md` | Effect 3.22 tagged errors, Service/Layer boundaries, retry/fallback, serialization boundary |
-| `typescript/effect-schema.md` | `effect/Schema` as the only validator, decode boundaries, cache contract test |
-| `web/mantine-tailwind.md` | Mantine 9 + `tailwind-preset-mantine`, CSS layer rules, `@mantine/hooks` hazards |
-| `web/tanstack-start.md` | Server functions, streaming, Vercel deploy via Nitro, Node-side scripts |
-| `web/ai-pipeline.md` | The deterministic/LLM boundary, `@effect/ai` usage, AI Gateway routing, committed cache |
+| Rule                              | Covers                                                                                                     |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `common/coding-style.md`          | Naming, immutability, file size, lint-backed bans, comment policy                                          |
+| `common/development-workflow.md`  | `vp` commands, forbidden alternatives, `minimumReleaseAge`, PR pre-check                                   |
+| `common/security.md`              | `.env*` handling, server-only env vars, input validation, public-demo abuse guard                          |
+| `common/testing.md`               | TDD via `vite-plus/test`, Effect helper, jsdom + Testing Library, server-fn mock, pinned coverage provider |
+| `typescript/project-structure.md` | bulletproof-react layout, `~/` alias, unidirectional imports, `domain/` + `data/` layers                   |
+| `typescript/react-conventions.md` | Named exports, function declarations, Utility-type props, react-compiler                                   |
+| `typescript/effect-patterns.md`   | Effect 3.22 tagged errors, Service/Layer boundaries, retry/fallback, serialization boundary                |
+| `typescript/effect-schema.md`     | `effect/Schema` as the only validator, decode boundaries, cache contract test                              |
+| `web/mantine-tailwind.md`         | Mantine 9 + `tailwind-preset-mantine`, CSS layer rules, `@mantine/hooks` hazards                           |
+| `web/tanstack-start.md`           | Server functions, streaming, Vercel deploy via Nitro, Node-side scripts                                    |
+| `web/ai-pipeline.md`              | The deterministic/LLM boundary, `@effect/ai` usage, AI Gateway routing, committed cache                    |
 
 ## Current implementation state
 

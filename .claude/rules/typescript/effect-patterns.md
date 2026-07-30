@@ -12,12 +12,12 @@ Pinned to **`effect@3.22.x`**. Do NOT follow `Effect-TS/effect` `main` on GitHub
 
 Effect owns the **AI pipeline** and the **data layer**. It does not own the UI.
 
-| Layer | Effect? |
-| --- | --- |
-| `src/domain/` | No — plain pure functions, no Effect import |
-| `src/data/` | Yes — `Schema.decodeUnknown` on load |
-| `src/features/*/api/` | Yes — services, Layers, pipeline steps |
-| `src/features/*/components/`, `hooks/` | No — plain React consuming plain data |
+| Layer                                  | Effect?                                     |
+| -------------------------------------- | ------------------------------------------- |
+| `src/domain/`                          | No — plain pure functions, no Effect import |
+| `src/data/`                            | Yes — `Schema.decodeUnknown` on load        |
+| `src/features/*/api/`                  | Yes — services, Layers, pipeline steps      |
+| `src/features/*/components/`, `hooks/` | No — plain React consuming plain data       |
 
 The boundary is deliberate: React owns rendering, Effect owns fallible orchestration.
 
@@ -65,8 +65,8 @@ export class PassportPipeline extends Context.Tag("PassportPipeline")<
 >() {}
 
 // two interchangeable implementations — the source swaps, the interface does not
-export const PipelineLive = Layer.effect(PassportPipeline, /* live AI */);
-export const PipelineFromCache = Layer.succeed(PassportPipeline, /* replay committed JSON */);
+export const PipelineLive = Layer.effect(PassportPipeline /* live AI */);
+export const PipelineFromCache = Layer.succeed(PassportPipeline /* replay committed JSON */);
 ```
 
 This swap is the core design claim of the project. Preset personas and free input run the **same** `Stream<PipelineEvent>`; only the Layer differs.
