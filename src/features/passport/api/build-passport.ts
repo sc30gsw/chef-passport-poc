@@ -1,5 +1,3 @@
-import { Data, Effect, Schedule } from "effect";
-
 import type {
   Country,
   Job,
@@ -7,39 +5,19 @@ import type {
   Persona,
   SkillSet,
   SkillVocabularyEntry,
-  TranslatedSkill,
   VisaRequirement,
 } from "~/data/schemas";
 import { rankJobMatches } from "~/domain/scoring";
 import { DEMO_COUNTRIES, assessAllCountries } from "~/domain/visa-eligibility";
-import { explainCountry } from "~/features/passport/api/steps/explain-country";
-import { explainJobMatch } from "~/features/passport/api/steps/explain-job-match";
-import { extractSkills } from "~/features/passport/api/steps/extract-skills";
-import { translateSkills } from "~/features/passport/api/steps/translate-skills";
 
 /**
- * The four steps composed, with the deterministic/LLM boundary visible in the code: every value
- * that affects an outcome comes from `src/domain/`, and every `Effect` that touches a model returns
- * only a string.
+ * The deterministic half of the pipeline, assembled. Nothing in this module touches Effect, a model
+ * or the network: every value that affects an outcome comes from `src/domain/`, which is what makes
+ * the judgement provable without a harness.
+ *
+ * The live pipeline lives in `pipeline-service.ts` and calls straight into `assessDeterministically`
+ * for exactly these numbers, so there is one implementation of the judgement and not two.
  */
-export class PipelineError extends Data.TaggedError("PipelineError")<{
-  cause?: unknown;
-  messageJa: string;
-  step: string;
-}> {}
-
-/** The gateway documents model fallback but not retries — those are ours to write. */
-const RESILIENCE = Schedule.exponential("500 millis").pipe(Schedule.intersect(Schedule.recurs(2)));
-
-function resilient<A, E, R>(step: string, effect: Effect.Effect<A, E, R>) {
-  return effect.pipe(
-    Effect.timeout("30 seconds"),
-    Effect.retry(RESILIENCE),
-    Effect.mapError(
-      (cause) => new PipelineError({ cause, messageJa: `${step}の生成に失敗しました`, step }),
-    ),
-  );
-}
 
 export type PassportInputs = {
   readonly jobs: readonly Job[];
@@ -104,64 +82,4 @@ export function deterministicProse(inputs: Omit<PassportInputs, "vocabulary">): 
     timings: [],
     translatedSkills: [],
   };
-}
-
-/**
- * Live pipeline. Judgement is computed first, then the model is asked for prose *about the result*
- * — never the other way round.
- */
-export function buildPassport(inputs: PassportInputs) {
-  return Effect.gen(function* () {
-    const { jobs, persona, visas, vocabulary } = inputs;
-
-    const skillSet = yield* resilient("スキル抽出", extractSkills(persona.resumeJa, vocabulary));
-
-    const { countries, excluded, matches } = assessDeterministically(inputs);
-
-    const translatedSkills: readonly TranslatedSkill[] = yield* resilient(
-      "スキル翻訳",
-      translateSkills(skillSet.skills, vocabulary),
-    );
-
-    const explainedCountries = yield* Effect.all(
-      countries.map((assessment) =>
-        resilient(
-          "適合理由",
-          explainCountry(
-            persona,
-            assessment,
-            visas.filter((visa) => visa.country === assessment.country),
-          ),
-        ).pipe(Effect.map((explanationJa) => ({ ...assessment, explanationJa }))),
-      ),
-    );
-
-    const explainedMatches = yield* Effect.all(
-      matches.map((match) => {
-        const job = jobs.find((item) => item.id === match.jobId);
-        if (job === undefined) {
-          return Effect.fail(
-            new PipelineError({
-              messageJa: `求人 ${match.jobId} が見つかりません`,
-              step: "マッチング",
-            }),
-          );
-        }
-        return resilient("マッチ理由", explainJobMatch(persona, job, match)).pipe(
-          Effect.map((reasonJa) => ({ ...match, reasonJa })),
-        );
-      }),
-    );
-
-    return {
-      countries: explainedCountries,
-      excludedJobs: excluded,
-      jobMatches: explainedMatches,
-      personaId: persona.id,
-      proseSource: "llm",
-      skillSet,
-      timings: [],
-      translatedSkills,
-    } satisfies PassportResult;
-  });
 }

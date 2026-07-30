@@ -1,9 +1,9 @@
 import { LanguageModel } from "@effect/ai";
-import { Context, Duration, Effect, Layer, Queue, Stream } from "effect";
+import { Context, Data, Duration, Effect, Layer, Option, Queue, Schedule, Stream } from "effect";
 
 import type { PassportResult, PipelineStep, StepTiming } from "~/data/schemas";
 import type { PassportInputs } from "~/features/passport/api/build-passport";
-import { PipelineError, assessDeterministically } from "~/features/passport/api/build-passport";
+import { assessDeterministically } from "~/features/passport/api/build-passport";
 import { explainCountry } from "~/features/passport/api/steps/explain-country";
 import { explainJobMatch } from "~/features/passport/api/steps/explain-job-match";
 import { extractSkills } from "~/features/passport/api/steps/extract-skills";
@@ -24,12 +24,51 @@ export class PassportPipeline extends Context.Tag("PassportPipeline")<
   { readonly run: (inputs: PassportInputs) => Stream.Stream<PipelineEvent> }
 >() {}
 
+export class PipelineError extends Data.TaggedError("PipelineError")<{
+  cause?: unknown;
+  messageJa: string;
+  step: string;
+}> {}
+
 /** Replay bounds, so a slow recorded call cannot stall the demo and a fast one is still visible. */
 const MIN_REPLAY_MS = 800;
 const MAX_REPLAY_MS = 2500;
 
 export function clampReplayMs(durationMs: number): number {
   return Math.min(MAX_REPLAY_MS, Math.max(MIN_REPLAY_MS, durationMs));
+}
+
+/** The gateway documents model fallback but not retries — those are ours to write. */
+const RESILIENCE = Schedule.exponential("500 millis").pipe(Schedule.intersect(Schedule.recurs(2)));
+
+/**
+ * Short nouns for failure text. `STEP_LABELS_JA` are progress sentences ("…しています") and do not
+ * compose into a failure message, so the two label sets stay separate.
+ */
+const STEP_FAILURE_JA = {
+  extract: "スキル抽出",
+  match: "マッチ理由",
+  translate: "スキル翻訳",
+  visa: "ビザ判定",
+} as const satisfies Record<PipelineStep, string>;
+
+/**
+ * Every model call carries the same timeout and retry, and a step that still will not recover
+ * becomes a typed `PipelineError` — which `liveProducer` turns into the in-band `Failed` event.
+ */
+function resilient<A, E, R>(step: PipelineStep, effect: Effect.Effect<A, E, R>) {
+  return effect.pipe(
+    Effect.timeout("30 seconds"),
+    Effect.retry(RESILIENCE),
+    Effect.mapError(
+      (cause) =>
+        new PipelineError({
+          cause,
+          messageJa: `${STEP_FAILURE_JA[step]}の生成に失敗しました`,
+          step,
+        }),
+    ),
+  );
 }
 
 type Offer = (event: PipelineEvent) => Effect.Effect<void>;
@@ -99,7 +138,10 @@ function liveProducer(inputs: PassportInputs, offer: Offer) {
         }),
       );
 
-    const skillSet = yield* record("extract", extractSkills(persona.resumeJa, vocabulary));
+    const skillSet = yield* record(
+      "extract",
+      resilient("extract", extractSkills(persona.resumeJa, vocabulary)),
+    );
 
     // Step 2 is deterministic. It still gets a timed step because the screen shows it happening.
     const assessed = yield* record(
@@ -109,7 +151,7 @@ function liveProducer(inputs: PassportInputs, offer: Offer) {
 
     const translatedSkills = yield* record(
       "translate",
-      translateSkills(skillSet.skills, vocabulary),
+      resilient("translate", translateSkills(skillSet.skills, vocabulary)),
     );
 
     const [countries, jobMatches] = yield* record(
@@ -117,10 +159,13 @@ function liveProducer(inputs: PassportInputs, offer: Offer) {
       Effect.all([
         Effect.all(
           assessed.countries.map((assessment) =>
-            explainCountry(
-              persona,
-              assessment,
-              visas.filter((visa) => visa.country === assessment.country),
+            resilient(
+              "match",
+              explainCountry(
+                persona,
+                assessment,
+                visas.filter((visa) => visa.country === assessment.country),
+              ),
             ).pipe(Effect.map((explanationJa) => ({ ...assessment, explanationJa }))),
           ),
         ),
@@ -134,7 +179,7 @@ function liveProducer(inputs: PassportInputs, offer: Offer) {
                     step: "match",
                   }),
                 )
-              : explainJobMatch(persona, job, match).pipe(
+              : resilient("match", explainJobMatch(persona, job, match)).pipe(
                   Effect.map((reasonJa) => ({ ...match, reasonJa })),
                 );
           }),
@@ -184,10 +229,17 @@ export const PipelineLive = Layer.effect(
 /**
  * Committed-cache replay. Uses the durations the generator actually measured, clamped — real
  * recorded timing rather than a fake progress bar, which is what makes it honest to describe.
+ *
+ * `paced` decides only *when* the events are emitted, never what they contain: a consumer that
+ * wants the finished result rather than the timeline (the SSR loader) would otherwise wait out the
+ * whole replay before rendering anything. The choice is made in `~/lib/runtime`, not here.
  */
 export function pipelineFromCache(
   lookup: (personaId: string) => PassportResult | undefined,
+  options: Partial<Record<"paced", boolean>> = {},
 ): Layer.Layer<PassportPipeline> {
+  const paced = options.paced ?? true;
+
   return Layer.succeed(PassportPipeline, {
     run: (inputs) =>
       streamFrom((offer) =>
@@ -209,7 +261,7 @@ export function pipelineFromCache(
               labelJa: STEP_LABELS_JA[timing.step],
               step: timing.step,
             });
-            yield* Effect.sleep(Duration.millis(clampReplayMs(timing.durationMs)));
+            if (paced) yield* Effect.sleep(Duration.millis(clampReplayMs(timing.durationMs)));
             yield* offer({
               _tag: "StepCompleted",
               durationMs: timing.durationMs,
@@ -220,5 +272,31 @@ export function pipelineFromCache(
           yield* offer({ _tag: "Completed", result: cached });
         }),
       ),
+  });
+}
+
+/**
+ * Collapses a run to its outcome, for callers that need the finished `PassportResult` rather than
+ * the live timeline — today the SSR loader in `passport-server.ts`. The streaming path consumes
+ * `run` directly; both resolve the same tag, so the Layer chosen in `~/lib/runtime` is what decides
+ * whether the result came from the cache or the gateway.
+ *
+ * The in-band `Failed` event becomes a typed `PipelineError` here, because a caller that is not a
+ * timeline has nowhere to put an event.
+ */
+export function runPassportPipeline(inputs: PassportInputs) {
+  return Effect.gen(function* () {
+    const pipeline = yield* PassportPipeline;
+    const terminal = Option.getOrUndefined(yield* Stream.runLast(pipeline.run(inputs)));
+
+    if (terminal?._tag === "Completed") return terminal.result;
+
+    return yield* Effect.fail(
+      new PipelineError({
+        messageJa:
+          terminal?._tag === "Failed" ? terminal.messageJa : "パイプラインが結果を返しませんでした",
+        step: terminal?._tag === "Failed" ? terminal.step : "unknown",
+      }),
+    );
   });
 }

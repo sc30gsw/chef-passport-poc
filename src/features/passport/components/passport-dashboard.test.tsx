@@ -3,16 +3,20 @@ import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it } from "vite-plus/test";
 
 import type { PassportView } from "~/features/passport/api/passport-server";
-import { loadPassportView } from "~/features/passport/api/passport-server";
+import { loadPassportView } from "~/features/passport/api/passport-view";
 import { PassportDashboard } from "~/features/passport/components/passport-dashboard";
+import { passportPipelineFromCache } from "~/lib/runtime";
 import { renderWithMantine } from "~/testing/render";
 
 let satoView: PassportView;
 let takahashiView: PassportView;
 
+/** Fixtures come through the same Layer the server function uses, so they cannot drift from it. */
+const preset = passportPipelineFromCache({ paced: false });
+
 beforeAll(async () => {
-  const sato = await loadPassportView("sato-takumi");
-  const takahashi = await loadPassportView("takahashi-kenta");
+  const sato = await loadPassportView("sato-takumi", preset);
+  const takahashi = await loadPassportView("takahashi-kenta", preset);
   if (!sato.ok || !takahashi.ok) throw new Error("fixture views failed to load");
   satoView = sato.data;
   takahashiView = takahashi.data;
