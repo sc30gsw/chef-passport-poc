@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    /* ES2023 for the immutable array methods (`toSorted`) that react-doctor's
+       js-tosorted-immutable rule requires in place of `[...arr].sort()`. Node 24 and every
+       browser Vite targets support them. */
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
