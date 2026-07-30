@@ -1,13 +1,17 @@
 import type { Layer } from "effect";
-import { Cause, Effect, Exit, Option, Schema, Stream } from "effect";
+import { Cause, Effect, Exit, Option, Stream } from "effect";
 
 import { loadJobs, loadPersona, loadSkillVocabulary, loadVisaRequirements } from "~/data/loaders";
 import type { PassportInputs } from "~/features/passport/api/build-passport";
 import { PassportPipeline } from "~/features/passport/api/pipeline-service";
 import { presetSingleFlight } from "~/features/passport/api/single-flight";
 import type { PassportStreamRequest } from "~/features/passport/types/passport-stream-request";
-import type { PipelineDegradation } from "~/features/passport/types/pipeline-event";
-import { PipelineEvent } from "~/features/passport/types/pipeline-event";
+import type {
+  EncodedPipelineEvent,
+  PipelineDegradation,
+} from "~/features/passport/types/pipeline-event";
+import { encodePipelineEvent } from "~/features/passport/types/pipeline-event";
+import { hasGatewayKey } from "~/lib/gateway-key";
 
 /**
  * The streaming transport's handler body, kept out of the `createServerFn` wrapper so it can be
@@ -27,18 +31,20 @@ export type PassportPipelineLayers = {
   readonly live: () => Layer.Layer<PassportPipeline, unknown>;
 };
 
-/** What travels on the wire: encoded on the server, decoded again on the client. */
-export type EncodedPipelineEvent = Schema.Schema.Encoded<typeof PipelineEvent>;
-
-const encodeEvent = Schema.encodeSync(PipelineEvent);
+/**
+ * The reasons a *preset* run can be downgraded — every one of them means the committed cache stood
+ * in for a live run. `prose-failed` is excluded deliberately: it belongs to free input, which has
+ * no cache to fall back to, and is set inside the Layer rather than here.
+ */
+type PresetDegradationReason = Exclude<PipelineDegradation["reason"], "prose-failed">;
 
 const DEGRADATION_JA = {
   "in-flight": "このシェフのライブ生成がすでに実行中のため、事前生成キャッシュを再生しました。",
   "live-failed": "ライブ生成に失敗したため、事前生成キャッシュを最初から再生しました。",
   "no-key": "サーバーにAPIキーが設定されていないため、事前生成キャッシュを再生しました。",
-} as const satisfies Record<PipelineDegradation["reason"], string>;
+} as const satisfies Record<PresetDegradationReason, string>;
 
-function degradation(reason: PipelineDegradation["reason"]): PipelineDegradation {
+function degradation(reason: PresetDegradationReason): PipelineDegradation {
   return { messageJa: DEGRADATION_JA[reason], reason };
 }
 
@@ -78,7 +84,7 @@ async function* replayFromCache(
   degraded: PipelineDegradation | undefined,
 ): AsyncGenerator<EncodedPipelineEvent> {
   for await (const event of pipelineEvents(layers.cache(), inputs)) {
-    yield encodeEvent(
+    yield encodePipelineEvent(
       event._tag === "Completed" && degraded !== undefined ? { ...event, degraded } : event,
     );
   }
@@ -95,8 +101,7 @@ async function* replayFromCache(
 function resolveSource(request: PassportStreamRequest) {
   if (!request.live) return { degraded: undefined, live: false };
 
-  const apiKey = process.env.AI_GATEWAY_API_KEY;
-  if (apiKey === undefined || apiKey.length === 0) {
+  if (!hasGatewayKey()) {
     return { degraded: degradation("no-key"), live: false };
   }
 
@@ -131,7 +136,7 @@ export async function* streamPassportEvents(
   const loaded = await Effect.runPromiseExit(loadInputs(request.personaId));
 
   if (Exit.isFailure(loaded)) {
-    yield encodeEvent({
+    yield encodePipelineEvent({
       _tag: "Failed",
       messageJa: loadFailureJa(request.personaId, loaded.cause),
       step: "load",
@@ -151,7 +156,7 @@ export async function* streamPassportEvents(
     for await (const event of pipelineEvents(layers.live(), inputs)) {
       if (event._tag === "Failed") break;
 
-      yield encodeEvent(event);
+      yield encodePipelineEvent(event);
       if (event._tag === "Completed") return;
     }
   } catch {

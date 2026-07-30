@@ -1,14 +1,18 @@
 import { LanguageModel } from "@effect/ai";
 import { Context, Data, Duration, Effect, Layer, Option, Queue, Schedule, Stream } from "effect";
 
-import type { PassportResult, PipelineStep, StepTiming } from "~/data/schemas";
-import type { PassportInputs } from "~/features/passport/api/build-passport";
-import { assessDeterministically } from "~/features/passport/api/build-passport";
+import type { PassportResult, PipelineStep, SkillSet, StepTiming } from "~/data/schemas";
+import type { FreeInputInputs, PassportInputs } from "~/features/passport/api/build-passport";
+import {
+  assessDeterministically,
+  deterministicProse,
+  personaFromFreeInput,
+} from "~/features/passport/api/build-passport";
 import { explainCountry } from "~/features/passport/api/steps/explain-country";
 import { explainJobMatch } from "~/features/passport/api/steps/explain-job-match";
 import { extractSkills } from "~/features/passport/api/steps/extract-skills";
 import { translateSkills } from "~/features/passport/api/steps/translate-skills";
-import type { PipelineEvent } from "~/features/passport/types/pipeline-event";
+import type { PipelineDegradation, PipelineEvent } from "~/features/passport/types/pipeline-event";
 import { STEP_LABELS_JA } from "~/features/passport/types/pipeline-event";
 
 /**
@@ -21,7 +25,16 @@ import { STEP_LABELS_JA } from "~/features/passport/types/pipeline-event";
  */
 export class PassportPipeline extends Context.Tag("PassportPipeline")<
   PassportPipeline,
-  { readonly run: (inputs: PassportInputs) => Stream.Stream<PipelineEvent> }
+  {
+    /** Preset personas: every judgement input is known before the first event. */
+    readonly run: (inputs: PassportInputs) => Stream.Stream<PipelineEvent>;
+    /**
+     * Free input: there is no `Persona` yet. Step 1 reads the résumé and *builds* one, which is why
+     * this cannot be `run` with a persona assembled by the caller — the skills the judgement needs
+     * do not exist until the extraction has answered. Same event type, same terminal contract.
+     */
+    readonly runFreeInput: (inputs: FreeInputInputs) => Stream.Stream<PipelineEvent>;
+  }
 >() {}
 
 export class PipelineError extends Data.TaggedError("PipelineError")<{
@@ -162,23 +175,36 @@ function timedStep<A, E, R>(step: PipelineStep, offer: Offer, effect: Effect.Eff
   });
 }
 
-function liveProducer(inputs: PassportInputs, offer: Offer) {
+/**
+ * Announces, measures and records one step. The array is appended to rather than rebuilt because
+ * the timings have to survive across the steps that produce them and land in the final result;
+ * it never leaves this module, and the result copies it.
+ */
+function makeRecorder(offer: Offer, timings: StepTiming[]) {
+  return <A, E, R>(step: PipelineStep, effect: Effect.Effect<A, E, R>) =>
+    timedStep(step, offer, effect).pipe(
+      Effect.map(({ durationMs, value }) => {
+        timings.push({ durationMs, step });
+        return value;
+      }),
+    );
+}
+
+type StepRecorder = ReturnType<typeof makeRecorder>;
+
+/**
+ * Steps 2–4, shared by both entry points. Past step 1 a preset run and a free-input run are the
+ * same problem — a `Persona` exists — so there is one implementation of the judgement and one of
+ * the wording, and the only thing that differs upstream is where the persona came from.
+ */
+function assessAndExplain(
+  inputs: PassportInputs,
+  skillSet: SkillSet,
+  timings: StepTiming[],
+  record: StepRecorder,
+) {
   return Effect.gen(function* () {
     const { jobs, persona, visas, vocabulary } = inputs;
-    const timings: StepTiming[] = [];
-
-    const record = <A, E, R>(step: PipelineStep, effect: Effect.Effect<A, E, R>) =>
-      timedStep(step, offer, effect).pipe(
-        Effect.map(({ durationMs, value }) => {
-          timings.push({ durationMs, step });
-          return value;
-        }),
-      );
-
-    const skillSet = yield* record(
-      "extract",
-      resilient("extract", extractSkills(persona.resumeJa, vocabulary)),
-    );
 
     // Step 2 is deterministic. It still gets a timed step because the screen shows it happening.
     const assessed = yield* record(
@@ -236,11 +262,84 @@ function liveProducer(inputs: PassportInputs, offer: Offer) {
       personaId: persona.id,
       proseSource: "llm",
       skillSet,
-      timings,
+      timings: [...timings],
       translatedSkills,
     };
 
-    yield* offer({ _tag: "Completed", result });
+    return result;
+  });
+}
+
+function liveProducer(inputs: PassportInputs, offer: Offer) {
+  return Effect.gen(function* () {
+    const timings: StepTiming[] = [];
+    const record = makeRecorder(offer, timings);
+
+    const skillSet = yield* record(
+      "extract",
+      resilient("extract", extractSkills(inputs.persona.resumeJa, inputs.vocabulary)),
+    );
+
+    yield* offer({
+      _tag: "Completed",
+      result: yield* assessAndExplain(inputs, skillSet, timings, record),
+    });
+  }).pipe(
+    Effect.timeout(TOTAL_BUDGET),
+    Effect.catchAll((error) => offer(failureEvent(error))),
+  );
+}
+
+/**
+ * Free input's degradation. A preset that loses its wording falls back to the committed cache;
+ * a stranger's résumé has no cache, so the only thing left is the deterministic wording — which
+ * `PassportResult.proseSource` already records, and this says out loud.
+ */
+const PROSE_FALLBACK: PipelineDegradation = {
+  messageJa: "説明文の生成に失敗したため、決定論ロジックが組み立てた説明文に切り替えました。",
+  reason: "prose-failed",
+};
+
+/**
+ * Free input, where step 1 is load-bearing in a way it is not for presets: the extraction is what
+ * *builds* the persona the deterministic judgement then runs on. If it fails there is nothing to
+ * judge and the run ends in `Failed`; if only the wording fails, the judgement survives and the run
+ * completes with deterministic prose.
+ */
+function freeInputProducer(inputs: FreeInputInputs, offer: Offer) {
+  return Effect.gen(function* () {
+    const { jobs, profile, visas, vocabulary } = inputs;
+    const timings: StepTiming[] = [];
+    const record = makeRecorder(offer, timings);
+
+    const extracted = yield* record(
+      "extract",
+      resilient("extract", extractSkills(profile.resume, vocabulary)),
+    );
+
+    // The declared language level overrides the model's reading of it: it is a judgement input, so
+    // the screen must never show a level the score did not use. See types/free-input-request.ts.
+    const skillSet: SkillSet = { ...extracted, languageLevel: profile.languageLevel };
+    const withPersona: PassportInputs = {
+      jobs,
+      persona: personaFromFreeInput(profile, skillSet),
+      visas,
+      vocabulary,
+    };
+
+    const explained = yield* Effect.option(
+      assessAndExplain(withPersona, skillSet, timings, record),
+    );
+
+    yield* offer(
+      Option.isSome(explained)
+        ? { _tag: "Completed", result: explained.value }
+        : {
+            _tag: "Completed",
+            degraded: PROSE_FALLBACK,
+            result: { ...deterministicProse(withPersona), skillSet, timings: [...timings] },
+          },
+    );
   }).pipe(
     Effect.timeout(TOTAL_BUDGET),
     Effect.catchAll((error) => offer(failureEvent(error))),
@@ -257,6 +356,10 @@ export const PipelineLive = Layer.effect(
   Effect.map(LanguageModel.LanguageModel, (model) => ({
     run: (inputs: PassportInputs) =>
       streamFrom((offer) => liveProducer(inputs, offer)).pipe(
+        Stream.provideService(LanguageModel.LanguageModel, model),
+      ),
+    runFreeInput: (inputs: FreeInputInputs) =>
+      streamFrom((offer) => freeInputProducer(inputs, offer)).pipe(
         Stream.provideService(LanguageModel.LanguageModel, model),
       ),
   })),
@@ -306,6 +409,19 @@ export function pipelineFromCache(
           }
 
           yield* offer({ _tag: "Completed", result: cached });
+        }),
+      ),
+    /**
+     * Implemented so the tag has one honest shape, not to be useful: there is no committed cache
+     * for a résumé nobody has seen. Saying so as a `Failed` event is what stops a caller from
+     * silently getting somebody else's passport back.
+     */
+    runFreeInput: () =>
+      streamFrom((offer) =>
+        offer({
+          _tag: "Failed",
+          messageJa: "自由入力は事前生成キャッシュから再生できません。ライブ生成が必要です。",
+          step: "cache",
         }),
       ),
   });

@@ -1,6 +1,6 @@
 import { LanguageModel } from "@effect/ai";
 import type { Context } from "effect";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Schema } from "effect";
 
 /**
  * Stub `LanguageModel` Layers. The real API is never called from a test — see
@@ -12,7 +12,11 @@ import { Effect, Layer } from "effect";
  */
 type StubResponses = Readonly<Record<string, unknown>>;
 
-type GenerateObjectOptions = Partial<Record<"objectName", string>>;
+type GenerateObjectOptions = {
+  readonly objectName?: string;
+  readonly prompt?: string;
+  readonly schema?: Schema.Schema<unknown, unknown, never>;
+};
 
 function modelLayer(
   generateObject: (options: GenerateObjectOptions) => Effect.Effect<{ value: unknown }, unknown>,
@@ -78,6 +82,45 @@ export function gatedModelLayer(
         )
       : Effect.succeed({ value: byObjectName[objectName ?? ""] }),
   );
+}
+
+/**
+ * Fails only the named steps. Free input's prose fallback needs a run where the extraction lands
+ * and the wording does not — the one case where a deterministic result still exists to report.
+ */
+export function selectiveFailModelLayer(
+  failingObjectNames: readonly string[],
+  byObjectName: StubResponses,
+) {
+  return modelLayer(({ objectName }) =>
+    failingObjectNames.includes(objectName ?? "")
+      ? Effect.fail(new Error(`${objectName} は失敗する設定`))
+      : Effect.succeed({ value: byObjectName[objectName ?? ""] }),
+  );
+}
+
+/**
+ * Decodes its canned answer against the schema the step passed, the way the real
+ * `generateObject` does. Everything else here skips that decode, which is fine for the steps whose
+ * subject is the pipeline's shape — but the prompt-injection test's whole claim is that the schema
+ * is what stops a model from inventing a skill, so that path needs the decode to actually run.
+ *
+ * `prompts` records what was sent, so a test can assert the résumé reached the model as data.
+ */
+export function schemaCheckedModelLayer(byObjectName: StubResponses) {
+  const prompts: string[] = [];
+
+  return {
+    layer: modelLayer(({ objectName, prompt, schema }) => {
+      prompts.push(prompt ?? "");
+      const value = byObjectName[objectName ?? ""];
+
+      return schema === undefined
+        ? Effect.succeed({ value })
+        : Schema.decodeUnknown(schema)(value).pipe(Effect.map((decoded) => ({ value: decoded })));
+    }),
+    prompts,
+  };
 }
 
 /** Shaped for `sato-takumi`, but nothing in the pipeline is persona-specific about it. */

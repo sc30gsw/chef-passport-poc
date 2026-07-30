@@ -9,6 +9,7 @@ import type {
 } from "~/data/schemas";
 import { rankJobMatches } from "~/domain/scoring";
 import { DEMO_COUNTRIES, assessAllCountries } from "~/domain/visa-eligibility";
+import type { FreeInputRequest } from "~/features/passport/types/free-input-request";
 
 /**
  * The deterministic half of the pipeline, assembled. Nothing in this module touches Effect, a model
@@ -25,6 +26,40 @@ export type PassportInputs = {
   readonly visas: readonly VisaRequirement[];
   readonly vocabulary: readonly SkillVocabularyEntry[];
 };
+
+/**
+ * Free input's inputs: the same static data, but no `Persona` yet. Step 1 has to run before one
+ * exists, because a résumé is the only thing the caller supplied.
+ */
+export type FreeInputInputs = Omit<PassportInputs, "persona"> & {
+  readonly profile: FreeInputRequest;
+};
+
+/** Not a real chef, and never rendered as one — the UI labels free-input runs from this id. */
+export const FREE_INPUT_PERSONA_ID = "free-input";
+
+const FREE_INPUT_PERSONA_NAME = "自由入力のシェフ";
+
+/**
+ * Assembles the `Persona` the deterministic judgement runs on, out of the two halves free input
+ * arrives in: what the model read from the résumé, and what the form declared.
+ *
+ * Pure and synchronous on purpose. Nothing here decides anything — it only says which half owns
+ * which field, and `free-input-request.ts` records why the split falls where it does.
+ */
+export function personaFromFreeInput(profile: FreeInputRequest, skillSet: SkillSet): Persona {
+  return {
+    age: profile.age,
+    experienceYears: skillSet.experienceYears,
+    hasEvidenceProof: profile.hasEvidenceProof,
+    id: FREE_INPUT_PERSONA_ID,
+    languageLevel: profile.languageLevel,
+    name: FREE_INPUT_PERSONA_NAME,
+    primaryGenre: skillSet.primaryGenre,
+    resumeJa: profile.resume,
+    skills: skillSet.skills,
+  };
+}
 
 /** The deterministic half. No Effect, no model, no network. */
 export function assessDeterministically(inputs: Omit<PassportInputs, "vocabulary">) {
