@@ -32,19 +32,11 @@ export function passportPipelineFromCache(options: Partial<Record<"paced", boole
 /**
  * Free input and live preset generation through the gateway. Built lazily inside the handler,
  * because the API key must not be read at module scope — module scope is evaluated during bundling.
+ *
+ * Whether it is built at all is decided by `~/lib/gateway-key`. There is no feature flag: the owner
+ * abolished `ENABLE_FREE_INPUT` on 2026-07-30 in favour of gating on the key alone.
+ * See .claude/rules/common/security.md.
  */
 export function passportPipelineLive() {
   return PipelineLive.pipe(Layer.provide(extractionModel()), Layer.provide(anthropicLayer()));
-}
-
-/**
- * Free-input mode calls a paid API from a public URL, so it is gated server-side and defaults off.
- * Preset personas work with the flag off. See .claude/rules/common/security.md.
- *
- * Kept deliberately: the owner has since abolished this flag in favour of gating on the presence of
- * `AI_GATEWAY_API_KEY`, and issue #8 owns removing it together with the `/free` copy that names it.
- * Deleting it here would break that route mid-branch for no gain.
- */
-export function isFreeInputEnabled(): boolean {
-  return process.env.ENABLE_FREE_INPUT === "true";
 }
