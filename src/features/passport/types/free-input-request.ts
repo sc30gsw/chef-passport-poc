@@ -30,14 +30,14 @@ import { LanguageLevel } from "~/data/schemas";
 export const MAX_RESUME_LENGTH = 2000;
 
 /** Below this there is nothing to extract from, and the run would burn a paid call to say so. */
-const MIN_RESUME_LENGTH = 50;
+export const MIN_RESUME_LENGTH = 50;
 
 /**
  * Bounded on both sides so the 417 age cap is exercised by a real number rather than by a typo.
  * Not a legal minimum — a working age no chef career can predate, and a ceiling past every visa cap.
  */
-const MIN_AGE_YEARS = 15;
-const MAX_AGE_YEARS = 80;
+export const MIN_AGE_YEARS = 15;
+export const MAX_AGE_YEARS = 80;
 
 export const FreeInputRequest = Schema.Struct({
   age: Schema.Number.pipe(

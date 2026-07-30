@@ -1,7 +1,8 @@
-import { Alert, Anchor, Container, List, Stack, Text, Title } from "@mantine/core";
+import { Anchor, Container, List, Stack, Text, Title } from "@mantine/core";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
+import { FreeInputPassport } from "~/features/passport/components/free-input-passport";
 import { MAX_RESUME_LENGTH } from "~/features/passport/types/free-input-request";
 import { hasGatewayKey } from "~/lib/gateway-key";
 
@@ -26,7 +27,7 @@ function FreePage() {
   const { available } = Route.useLoaderData();
 
   return (
-    <Container size="sm" py="xl">
+    <Container size="lg" py="xl">
       <Stack gap="lg">
         <Anchor component={Link} to="/">
           ← シェフ選択に戻る
@@ -36,23 +37,7 @@ function FreePage() {
           自由入力モード
         </Title>
 
-        {available ? (
-          <Alert color="blue" title="準備中" variant="light">
-            <Text size="sm">
-              サーバーにAPIキーがあるため、自由入力のライブ生成は利用可能な状態です。
-              サーバー関数とスキーマは実装済みですが、入力フォームはこのブランチにはまだ入っていません。
-              プリセット3人はキャッシュ再生で完全に動作します。
-            </Text>
-          </Alert>
-        ) : (
-          <Alert color="gray" title="現在は利用できません" variant="light">
-            <Text size="sm">
-              自由入力は公開URLから有料APIを呼ぶため、サーバー側で
-              <code>AI_GATEWAY_API_KEY</code>
-              の有無だけを見て判定します。キーが未設定の環境では、モデルを呼ぶ前に型付きの拒否を返します。
-            </Text>
-          </Alert>
-        )}
+        <FreeInputPassport available={available} />
 
         <Text fw={600} size="sm">
           自由入力に必要な3つのガード
