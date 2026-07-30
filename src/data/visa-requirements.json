@@ -1,0 +1,80 @@
+[
+  {
+    "id": "sg-employment-pass",
+    "country": "SG",
+    "name": "Employment Pass",
+    "sourceUrl": "https://www.mom.gov.sg/passes-and-permits/employment-pass/eligibility",
+    "requiresSponsor": true,
+    "minExperienceYears": 5,
+    "minSalary": { "amount": 5600, "currency": "SGD", "period": "month" },
+    "expectedLanguage": "conversational",
+    "requiresEvidenceProof": false,
+    "requiresSeasonalRole": false,
+    "durationNote": "2年（新規・更新可）。COMPASS点数制と併用。給与下限は2026-07-30時点のMOM公表値（月額5,600 SGD）"
+  },
+  {
+    "id": "sg-s-pass",
+    "country": "SG",
+    "name": "S Pass",
+    "sourceUrl": "https://www.mom.gov.sg/passes-and-permits/s-pass/eligibility",
+    "requiresSponsor": true,
+    "minExperienceYears": 3,
+    "minSalary": { "amount": 3300, "currency": "SGD", "period": "month" },
+    "expectedLanguage": "basic",
+    "requiresEvidenceProof": false,
+    "requiresSeasonalRole": false,
+    "durationNote": "最長2年。企業ごとの割当（クォータ）あり。給与下限は2026-07-30時点のMOM公表値（月額3,300 SGD）"
+  },
+  {
+    "id": "au-482-skills-in-demand",
+    "country": "AU",
+    "name": "Skills in Demand visa (subclass 482)",
+    "sourceUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/skills-in-demand-visa-subclass-482",
+    "requiresSponsor": true,
+    "minExperienceYears": 2,
+    "minSalary": { "amount": 76515, "currency": "AUD", "period": "year" },
+    "expectedLanguage": "basic",
+    "requiresEvidenceProof": false,
+    "requiresSeasonalRole": false,
+    "durationNote": "最長4年。雇用主の指名（nomination）が前提。2024-12-07にTSSから移行。所得下限はCore Skills Income Threshold（2026-07-30時点で年額76,515 AUD）"
+  },
+  {
+    "id": "au-417-working-holiday",
+    "country": "AU",
+    "name": "Working Holiday visa (subclass 417)",
+    "sourceUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/work-holiday-417",
+    "requiresSponsor": false,
+    "maxAgeYears": 30,
+    "minExperienceYears": 0,
+    "expectedLanguage": "none",
+    "requiresEvidenceProof": false,
+    "requiresSeasonalRole": false,
+    "durationNote": "12か月（指定業務の従事で延長可）。日本国籍は申請時18〜30歳。スポンサー不要・給与下限なしだが、賃金を保証する雇用契約も伴わない"
+  },
+  {
+    "id": "us-h2b",
+    "country": "US",
+    "name": "H-2B Temporary Non-Agricultural Worker",
+    "sourceUrl": "https://www.uscis.gov/working-in-the-united-states/temporary-workers/h-2b-temporary-non-agricultural-workers",
+    "requiresSponsor": true,
+    "minExperienceYears": 1,
+    "minSalary": { "amount": 3200, "currency": "USD", "period": "month" },
+    "expectedLanguage": "basic",
+    "requiresEvidenceProof": false,
+    "requiresSeasonalRole": true,
+    "durationNote": "雇用主の一時的需要（季節性・繁忙期・断続的・一回性）が前提。年間上限66,000件で抽選。通年の常勤ポジションは対象外"
+  },
+  {
+    "id": "us-o1",
+    "country": "US",
+    "name": "O-1 Individuals with Extraordinary Ability or Achievement",
+    "sourceUrl": "https://www.uscis.gov/working-in-the-united-states/temporary-workers/o-1-visa-individuals-with-extraordinary-ability-or-achievement",
+    "requiresSponsor": true,
+    "minExperienceYears": 8,
+    "minSalary": { "amount": 6000, "currency": "USD", "period": "month" },
+    "expectedLanguage": "conversational",
+    "requiresEvidenceProof": true,
+    "requiresSeasonalRole": false,
+    "durationNote": "最長3年（延長可）。国内外で認知された卓越性の立証が必要（受賞歴・メディア掲載・専門家の推薦など）"
+  }
+]

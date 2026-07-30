@@ -1,0 +1,77 @@
+[
+  { "id": "sashimi-slicing", "labelJa": "白身の刺身引き", "labelEn": "Slicing white-fish sashimi" },
+  {
+    "id": "yanagiba-knife",
+    "labelJa": "柳刃包丁の運用",
+    "labelEn": "Yanagiba single-bevel knife work"
+  },
+  {
+    "id": "fish-butchery",
+    "labelJa": "魚の捌き・卸し",
+    "labelEn": "Whole-fish butchery and filleting"
+  },
+  {
+    "id": "nigiri-forming",
+    "labelJa": "握りの成形",
+    "labelEn": "Nigiri forming and rice seasoning"
+  },
+  {
+    "id": "omakase-course-design",
+    "labelJa": "おまかせ構成",
+    "labelEn": "Omakase tasting-menu sequencing"
+  },
+  {
+    "id": "kaiseki-course-composition",
+    "labelJa": "会席・懐石の献立構成",
+    "labelEn": "Kaiseki multi-course composition"
+  },
+  { "id": "dashi-preparation", "labelJa": "出汁の引き方", "labelEn": "Dashi stock extraction" },
+  { "id": "seasonal-menu-design", "labelJa": "季節献立の設計", "labelEn": "Seasonal menu design" },
+  {
+    "id": "sauce-work",
+    "labelJa": "ソース仕立て",
+    "labelEn": "Classical sauce work and reductions"
+  },
+  { "id": "sous-vide", "labelJa": "低温調理", "labelEn": "Sous-vide and low-temperature cookery" },
+  {
+    "id": "pastry-basics",
+    "labelJa": "製菓の基礎",
+    "labelEn": "Foundational pastry and dessert work"
+  },
+  {
+    "id": "plating-design",
+    "labelJa": "盛り付け設計",
+    "labelEn": "Plating and presentation design"
+  },
+  {
+    "id": "broth-large-batch",
+    "labelJa": "大量スープ仕込み",
+    "labelEn": "Large-batch broth production"
+  },
+  {
+    "id": "noodle-selection",
+    "labelJa": "麺の選定・加水調整",
+    "labelEn": "Noodle selection and hydration tuning"
+  },
+  {
+    "id": "chashu-preparation",
+    "labelJa": "チャーシュー仕込み",
+    "labelEn": "Chashu braising and portioning"
+  },
+  {
+    "id": "store-operations",
+    "labelJa": "店舗オペレーション全般",
+    "labelEn": "Front-to-back store operations"
+  },
+  {
+    "id": "kitchen-hygiene-haccp",
+    "labelJa": "衛生管理・HACCP",
+    "labelEn": "Kitchen hygiene and HACCP compliance"
+  },
+  {
+    "id": "inventory-cost-control",
+    "labelJa": "在庫・原価管理",
+    "labelEn": "Inventory and food-cost control"
+  },
+  { "id": "staff-training", "labelJa": "スタッフ教育", "labelEn": "Kitchen staff training" }
+]

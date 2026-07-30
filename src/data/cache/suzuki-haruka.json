@@ -1,0 +1,249 @@
+{
+  "countries": [
+    {
+      "bestVisaId": "sg-s-pass",
+      "country": "SG",
+      "grade": "○",
+      "score": 62,
+      "sponsorFreeEligible": false,
+      "visas": [
+        {
+          "blockedReasonsJa": [],
+          "eligible": true,
+          "score": 46,
+          "visaId": "sg-employment-pass"
+        },
+        {
+          "blockedReasonsJa": [],
+          "eligible": true,
+          "score": 62,
+          "visaId": "sg-s-pass"
+        }
+      ],
+      "explanationJa": "適合度 ○。スコア 62 で sg-s-pass が通ります。"
+    },
+    {
+      "bestVisaId": "au-417-working-holiday",
+      "country": "AU",
+      "grade": "○",
+      "score": 46,
+      "sponsorFreeEligible": true,
+      "visas": [
+        {
+          "blockedReasonsJa": [],
+          "eligible": true,
+          "score": 44,
+          "visaId": "au-482-skills-in-demand"
+        },
+        {
+          "blockedReasonsJa": [],
+          "eligible": true,
+          "score": 46,
+          "visaId": "au-417-working-holiday"
+        }
+      ],
+      "explanationJa": "適合度 ○。スコア 46 で au-417-working-holiday が通ります。"
+    },
+    {
+      "bestVisaId": null,
+      "country": "US",
+      "grade": "△",
+      "score": 0,
+      "sponsorFreeEligible": false,
+      "visas": [
+        {
+          "blockedReasonsJa": [
+            "季節性のある一時的な求人が前提だが、対象求人はすべて通年の常勤ポジション"
+          ],
+          "eligible": false,
+          "score": 61,
+          "visaId": "us-h2b"
+        },
+        {
+          "blockedReasonsJa": [
+            "経験5年が必要年数8年に届かない",
+            "受賞歴・メディア掲載などの卓越性を立証する実績がない",
+            "到達可能な月額 4800 USD が給与下限 6000 USD に届かない"
+          ],
+          "eligible": false,
+          "score": 41,
+          "visaId": "us-o1"
+        }
+      ],
+      "explanationJa": "適合するビザがありません。理由: 季節性のある一時的な求人が前提だが、対象求人はすべて通年の常勤ポジション / 経験5年が必要年数8年に届かない / 受賞歴・メディア掲載などの卓越性を立証する実績がない / 到達可能な月額 4800 USD が給与下限 6000 USD に届かない"
+    }
+  ],
+  "excludedJobs": [
+    {
+      "jobId": "sg-french-finedining",
+      "reasonJa": "ビザスポンサー不可の求人。この国で取得可能なスポンサー不要のビザがないため対象外"
+    },
+    {
+      "jobId": "us-french-seattle",
+      "reasonJa": "ビザスポンサー不可の求人。この国で取得可能なスポンサー不要のビザがないため対象外"
+    }
+  ],
+  "jobMatches": [
+    {
+      "jobId": "us-bistro-chicago",
+      "notesJa": [
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 91,
+      "reasonJa": "スコア 91。専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "au-french-sydney",
+      "notesJa": [
+        "要求語学「日常会話レベル」に対して「簡単な英会話」のため語学面で減点"
+      ],
+      "score": 89,
+      "reasonJa": "スコア 89。要求語学「日常会話レベル」に対して「簡単な英会話」のため語学面で減点。"
+    },
+    {
+      "jobId": "au-bistro-melbourne",
+      "notesJa": [
+        "要求語学「ビジネスレベル」に対して「簡単な英会話」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 80,
+      "reasonJa": "スコア 80。要求語学「ビジネスレベル」に対して「簡単な英会話」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "sg-bistro-tanjong",
+      "notesJa": [
+        "要求語学「ビジネスレベル」に対して「簡単な英会話」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 80,
+      "reasonJa": "スコア 80。要求語学「ビジネスレベル」に対して「簡単な英会話」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "au-ramen-brisbane",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 47,
+      "reasonJa": "スコア 47。必要スキル3件のうち3件が未充足、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "sg-ramen-orchard",
+      "notesJa": [
+        "必要スキル4件のうち4件が未充足",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 44,
+      "reasonJa": "スコア 44。必要スキル4件のうち4件が未充足、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "sg-sushi-cbd",
+      "notesJa": [
+        "必要スキル4件のうち4件が未充足",
+        "要求語学「ビジネスレベル」に対して「簡単な英会話」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 37,
+      "reasonJa": "スコア 37。必要スキル4件のうち4件が未充足、要求語学「ビジネスレベル」に対して「簡単な英会話」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "us-ramen-sf",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "要求語学「日常会話レベル」に対して「簡単な英会話」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 37,
+      "reasonJa": "スコア 37。必要スキル3件のうち3件が未充足、要求語学「日常会話レベル」に対して「簡単な英会話」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "sg-hotel-washoku",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "必要経験6年に対して5年で不足",
+        "要求語学「日常会話レベル」に対して「簡単な英会話」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 36,
+      "reasonJa": "スコア 36。必要スキル3件のうち3件が未充足、必要経験6年に対して5年で不足、要求語学「日常会話レベル」に対して「簡単な英会話」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "au-hotel-sydney",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "必要経験6年に対して5年で不足",
+        "要求語学「日常会話レベル」に対して「簡単な英会話」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 35,
+      "reasonJa": "スコア 35。必要スキル3件のうち3件が未充足、必要経験6年に対して5年で不足、要求語学「日常会話レベル」に対して「簡単な英会話」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "us-sushi-la",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "必要経験6年に対して5年で不足",
+        "要求語学「ビジネスレベル」に対して「簡単な英会話」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 33,
+      "reasonJa": "スコア 33。必要スキル3件のうち3件が未充足、必要経験6年に対して5年で不足、要求語学「ビジネスレベル」に対して「簡単な英会話」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "us-kaiseki-ny",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "必要経験8年に対して5年で不足",
+        "要求語学「ビジネスレベル」に対して「簡単な英会話」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 29,
+      "reasonJa": "スコア 29。必要スキル3件のうち3件が未充足、必要経験8年に対して5年で不足、要求語学「ビジネスレベル」に対して「簡単な英会話」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "au-sushi-melbourne",
+      "notesJa": [
+        "必要スキル4件のうち4件が未充足",
+        "必要経験10年に対して5年で不足",
+        "要求語学「ビジネスレベル」に対して「簡単な英会話」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 26,
+      "reasonJa": "スコア 26。必要スキル4件のうち4件が未充足、必要経験10年に対して5年で不足、要求語学「ビジネスレベル」に対して「簡単な英会話」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    }
+  ],
+  "personaId": "suzuki-haruka",
+  "proseSource": "deterministic",
+  "skillSet": {
+    "experienceYears": 5,
+    "languageLevel": "basic",
+    "primaryGenre": "french",
+    "skills": [
+      "sauce-work",
+      "sous-vide",
+      "plating-design",
+      "pastry-basics",
+      "kitchen-hygiene-haccp"
+    ],
+    "summaryJa": "経験5年、frenchを専門とするシェフ。"
+  },
+  "timings": [
+    {
+      "durationMs": 0,
+      "step": "extract"
+    },
+    {
+      "durationMs": 0.29083399999990434,
+      "step": "visa"
+    },
+    {
+      "durationMs": 0,
+      "step": "translate"
+    },
+    {
+      "durationMs": 0,
+      "step": "match"
+    }
+  ],
+  "translatedSkills": []
+}
