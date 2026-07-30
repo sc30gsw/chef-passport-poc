@@ -139,8 +139,7 @@ Model slugs must be provider-prefixed (`anthropic/claude-haiku-4.5`); a bare slu
 
 ## Documentation
 
-- [`PLAN.md`](PLAN.md) — how it is built: boundaries, schemas, rules, routes, test layers
-- [`docs/requirement.md`](docs/requirement.md) — what it is (Japanese)
+- [`docs/requirement.md`](docs/requirement.md) — what it is, and the persona/grade spec (Japanese)
 - [`docs/adr/`](docs/adr/) — stack choice, gateway routing, deterministic scoring
 - [`AGENTS.md`](AGENTS.md) — Vite+ workflow and project rules
 

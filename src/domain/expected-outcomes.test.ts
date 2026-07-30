@@ -40,7 +40,7 @@ function eligibleVisaIds(visaList: readonly VisaAssessment[]): readonly string[]
   return visaList.filter((visa) => visa.eligible).map((visa) => visa.visaId);
 }
 
-describe("期待結果表（PLAN.md §3.3）", () => {
+describe("期待結果表（docs/requirement.md のペルソナ表）", () => {
   for (const [personaId, expected] of Object.entries(EXPECTED_GRADES)) {
     it(`${personaId} は SG=${expected.SG} / AU=${expected.AU} / US=${expected.US}`, () => {
       const grades = Object.fromEntries(

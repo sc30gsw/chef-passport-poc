@@ -71,7 +71,7 @@ describe("スキル語彙の契約", () => {
   });
 });
 
-describe("求人・ビザデータの意図した配分（PLAN.md §2.4）", () => {
+describe("求人・ビザデータの意図した配分（docs/requirement.md の「意図的な配分」）", () => {
   it.each(DEMO_COUNTRIES)("%s は求人5件、スポンサー可4件・不可1件", (country) => {
     const countryJobs = jobs.filter((job) => job.country === country);
 
