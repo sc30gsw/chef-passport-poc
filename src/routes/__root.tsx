@@ -62,10 +62,24 @@ function RootComponent() {
   );
 }
 
+/**
+ * The three fallbacks below are deliberately plain HTML with no styling at all.
+ *
+ * On the **root** route these replace `RootComponent` itself — `@tanstack/react-router`'s
+ * `MatchView` puts the catch/not-found boundaries around the match's own component, and this repo
+ * sets no `shellComponent`. So when one of them renders there is no `<html>`, no `<HeadContent />`
+ * and therefore no `styles.css` link, and no `MantineProvider`. Mantine components would throw
+ * ("MantineProvider was not found in component tree") and Tailwind classes would resolve to
+ * nothing, which is why audit #17 finding 6's proposed `Title`/`Text` + `c="red.6"` is *not* the
+ * fix here. The finding's actual complaint — typography re-implemented in Tailwind and a
+ * `text-red-600` outside the Mantine token space — is answered by removing the styling instead:
+ * an unstyled `<h1>エラー</h1>` says exactly as much as a red one, and cannot lie about being
+ * themed. Restoring the shell for these screens needs `shellComponent` and is a separate change.
+ */
 function NotFoundComponent() {
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-semibold">404</h1>
+    <div>
+      <h1>404</h1>
       <p>ページが見つかりませんでした。</p>
     </div>
   );
@@ -73,8 +87,8 @@ function NotFoundComponent() {
 
 function ErrorComponent({ error }: ErrorComponentProps) {
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-semibold text-red-600">エラー</h1>
+    <div>
+      <h1>エラー</h1>
       <p>{error.message}</p>
     </div>
   );
@@ -82,7 +96,7 @@ function ErrorComponent({ error }: ErrorComponentProps) {
 
 function PendingComponent() {
   return (
-    <div className="p-4">
+    <div>
       <p>読み込み中...</p>
     </div>
   );
