@@ -1,24 +1,11 @@
 import { Anchor, Container, List, Stack, Text, Title } from "@mantine/core";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import { Effect } from "effect";
 
 import { loadJobs, loadSkillVocabulary, loadVisaRequirements } from "~/data/loaders";
+import { readFreeInputAvailabilityServer } from "~/features/passport/api/free-input-availability-server";
 import { FreeInputPassport } from "~/features/passport/components/free-input-passport";
 import { MAX_RESUME_LENGTH } from "~/features/passport/types/free-input-request";
-import { hasGatewayKey } from "~/lib/gateway-key";
-
-/**
- * Key presence is read on the server, inside the handler — never at module scope, and never with a
- * `VITE_` prefix, which would ship the key itself to the browser. The page learns only whether live
- * generation is possible, which is a boolean, not a secret.
- *
- * There is no feature flag: `ENABLE_FREE_INPUT` was abolished by the owner on 2026-07-30 in favour
- * of gating on `AI_GATEWAY_API_KEY` alone. See .claude/rules/common/security.md.
- */
-const readFreeInputAvailabilityServer = createServerFn({ method: "GET" }).handler(() => ({
-  available: hasGatewayKey(),
-}));
 
 /**
  * The bundled reference data is joined here rather than inside the component: the loader is the
