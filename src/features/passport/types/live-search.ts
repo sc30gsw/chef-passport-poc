@@ -26,6 +26,3 @@ const liveFlag = v.fallback(
 export const liveSearchSchema = v.object({
   live: v.optional(liveFlag, defaultLiveSearchParams.live),
 });
-
-export type LiveSearchParamsInput = v.InferInput<typeof liveSearchSchema>;
-export type LiveSearchParams = v.InferOutput<typeof liveSearchSchema>;
