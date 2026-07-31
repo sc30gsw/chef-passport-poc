@@ -76,11 +76,81 @@ export default defineConfig({
           "react-doctor/only-export-components": "off",
         },
       },
+      {
+        // The documented exception: `scripts/**` runs under plain Node, which does not resolve
+        // tsconfig `paths`, so relative specifiers with explicit `.ts` extensions are mandatory
+        // there. See .claude/rules/typescript/project-structure.md.
+        files: ["scripts/**"],
+        rules: {
+          "no-restricted-imports": "off",
+        },
+      },
+      // The unidirectional-import approximation .claude/rules/typescript/project-structure.md
+      // describes: oxc has no `import/no-restricted-paths`, so `shared → features → routes` is
+      // expressed as `no-restricted-imports` patterns per layer. An override *replaces* the base
+      // rule rather than merging with it, so each one repeats the relative-import ban.
+      {
+        files: ["src/domain/**", "src/data/**"],
+        rules: {
+          "no-restricted-imports": [
+            "error",
+            {
+              patterns: [
+                {
+                  group: ["~/features/*", "~/features/**", "~/routes/*", "~/routes/**"],
+                  message:
+                    "共有レイヤ（domain/ data/）から feature/route を参照できません。共有側へ引き上げてください。",
+                },
+                {
+                  group: ["./*", "../*"],
+                  message: "src/ 内は `~/` エイリアスのみ。相対importは scripts/ だけの例外です。",
+                },
+              ],
+            },
+          ],
+        },
+      },
+      {
+        files: ["src/features/**"],
+        rules: {
+          "no-restricted-imports": [
+            "error",
+            {
+              patterns: [
+                {
+                  group: ["~/routes/*", "~/routes/**"],
+                  message: "feature から route を参照できません。共有側へ引き上げてください。",
+                },
+                {
+                  group: ["./*", "../*"],
+                  message: "src/ 内は `~/` エイリアスのみ。相対importは scripts/ だけの例外です。",
+                },
+              ],
+            },
+          ],
+        },
+      },
     ],
     plugins: ["react", "react-perf", "import", "jsx-a11y", "promise"],
     rules: {
       ...reactDoctorRules,
+      // Named by .claude/rules/common/coding-style.md and project-structure.md as the
+      // enforcement behind "no import cycles" and the `~/`-only rule. Both were documentation
+      // only until now (audit #17 findings 3, 4 and 5). `src/routeTree.gen.ts` is generated and
+      // already in `ignorePatterns`, so the relative-import ban needs no carve-out for it.
+      "import/no-cycle": "error",
       "no-default-export": "error",
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["./*", "../*"],
+              message: "src/ 内は `~/` エイリアスのみ。相対importは scripts/ だけの例外です。",
+            },
+          ],
+        },
+      ],
     },
   },
   staged: {
