@@ -1,4 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
+import { StrictMode } from "react";
 import { describe, expect, it } from "vite-plus/test";
 
 import { lookupCachedPassport } from "~/data/cache-index";
@@ -70,6 +71,31 @@ describe("usePipelineStream", () => {
     const { result } = stream(openRejects);
 
     await waitFor(() => expect(result.current.failureJa).toBe(TRANSPORT_JA));
+  });
+
+  it("StrictModeの二重マウントでもリクエストは1本しか開かない", async () => {
+    let opens = 0;
+    const openCounting = () => {
+      opens += 1;
+      return openCompleted();
+    };
+
+    // StrictModeはdevでエフェクトを mount→cleanup→remount と2回走らせる。1本目のリクエストが
+    // サーバーに届くと single-flight スロットを先取りし、ユーザーが実際に見ている2本目が
+    // in-flight 拒否でキャッシュ再生に降格する——dev でライブ生成が常に降格して見えた原因。
+    const { result } = renderHook(
+      () =>
+        usePipelineStream({
+          decodeFailureJa: DECODE_JA,
+          open: openCounting,
+          request: "sato-takumi",
+          transportFailureJa: TRANSPORT_JA,
+        }),
+      { wrapper: StrictMode },
+    );
+
+    await waitFor(() => expect(result.current.isComplete).toBe(true));
+    expect(opens).toBe(1);
   });
 
   it("復号できないチャンクは転送失敗とは別の文言になる", async () => {

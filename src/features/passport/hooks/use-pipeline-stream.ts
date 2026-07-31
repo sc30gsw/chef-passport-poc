@@ -48,6 +48,13 @@ async function consumeStream(
   let sawTerminal = false;
 
   try {
+    // 1マイクロタスクの遅延がStrictMode耐性の要: devの mount→cleanup→remount は同期で走るので、
+    // ここが再開する頃には1回目のマウントは取り消し済みで、リクエストを開かずに消える。遅延なしだと
+    // 1本目がサーバーの single-flight スロットを先取りし、ユーザーが見ている2本目が in-flight 拒否
+    // でキャッシュ再生に降格する（自由入力は拒否で終わる）。
+    await Promise.resolve();
+    if (isCancelled()) return "completed";
+
     const stream = await open();
 
     for await (const chunk of stream) {
