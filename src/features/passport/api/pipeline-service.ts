@@ -342,15 +342,21 @@ function freeInputProducer(inputs: FreeInputInputs, offer: Offer, models: Pipeli
       resilient("extract", onModel(models.extraction, extractSkills(profile.resume, vocabulary))),
     );
 
-    // The declared language level overrides the model's reading of it: it is a judgement input, so
-    // the screen must never show a level the score did not use. See types/free-input-request.ts.
-    const skillSet: SkillSet = { ...extracted, languageLevel: profile.languageLevel };
-    const withPersona: PassportInputs = {
-      jobs,
-      persona: personaFromFreeInput(profile, skillSet),
-      visas,
-      vocabulary,
+    // Every judgement input is read back off the assembled persona rather than off the extraction,
+    // so the screen cannot show a value the score did not use. Two corrections happen inside
+    // `personaFromFreeInput` and both have to be visible: the declared language level overrides the
+    // model's reading of it (types/free-input-request.ts), and the experience the résumé claims is
+    // clamped to what the declared age accounts for (audit #16 finding 2). `summaryJa` is the only
+    // field with no persona counterpart — it is prose, and nothing judges it.
+    const persona = personaFromFreeInput(profile, extracted);
+    const skillSet: SkillSet = {
+      experienceYears: persona.experienceYears,
+      languageLevel: persona.languageLevel,
+      primaryGenre: persona.primaryGenre,
+      skills: persona.skills,
+      summaryJa: extracted.summaryJa,
     };
+    const withPersona: PassportInputs = { jobs, persona, visas, vocabulary };
 
     const explained = yield* Effect.option(
       assessAndExplain(withPersona, skillSet, timings, record, models),

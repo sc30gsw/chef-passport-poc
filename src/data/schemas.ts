@@ -82,7 +82,12 @@ export const VisaRequirement = Schema.Struct({
   /** H-2B only: the role itself has to be a temporary/seasonal one. */
   requiresSeasonalRole: Schema.Boolean,
   requiresSponsor: Schema.Boolean,
-  sourceUrl: Schema.String,
+  /**
+   * The only data-driven `href` in the app (`country-grade-card.tsx` renders one per requirement),
+   * so the scheme is constrained here rather than trusted at the sink — `javascript:` in a fixture
+   * would otherwise become a link the demo happily renders. See audit #16 finding 7.
+   */
+  sourceUrl: Schema.String.pipe(Schema.pattern(/^https:\/\//)),
 });
 export type VisaRequirement = Schema.Schema.Type<typeof VisaRequirement>;
 
@@ -102,10 +107,26 @@ export const Job = Schema.Struct({
 });
 export type Job = Schema.Schema.Type<typeof Job>;
 
+/**
+ * Upper bound on any experience figure that reaches a judgement. Not a claim about careers: the
+ * free-input form already bounds age at 15..80, so 60 years of work is past every life it admits.
+ * It exists because `experienceYears` is the one number a stranger's résumé can put straight into a
+ * hard visa gate (`visa-eligibility.ts`) and 20 of the 100 match points (`scoring.ts`), and an
+ * unbounded range turns "state your experience" into "grade your own eligibility".
+ * See audit #16 finding 2.
+ */
+export const MAX_EXPERIENCE_YEARS = 60;
+
+const ExperienceYears = Schema.Number.pipe(
+  Schema.int(),
+  Schema.nonNegative(),
+  Schema.lessThanOrEqualTo(MAX_EXPERIENCE_YEARS),
+);
+
 export const Persona = Schema.Struct({
   /** Required because visa 417 has an age cap; without it that rule cannot fire from data. */
   age: Schema.Number.pipe(Schema.int(), Schema.positive()),
-  experienceYears: Schema.Number.pipe(Schema.nonNegative()),
+  experienceYears: ExperienceYears,
   /** Awards or press coverage, which is what O-1 asks to see evidence of. */
   hasEvidenceProof: Schema.Boolean,
   id: Schema.String,
@@ -118,12 +139,17 @@ export const Persona = Schema.Struct({
 });
 export type Persona = Schema.Schema.Type<typeof Persona>;
 
-/** Step 1 output — the LLM's structured reading of the résumé. */
+/**
+ * Step 1 output — the LLM's structured reading of the résumé, and the widest surface a stranger's
+ * text has on this app. Every field is bounded here rather than downstream: three are literal
+ * unions, `experienceYears` carries the shared cap, and `skills` matches `Persona`'s `minItems(1)`
+ * so an empty extraction cannot assemble a `Persona` that violates its own schema (finding 6).
+ */
 export const SkillSet = Schema.Struct({
-  experienceYears: Schema.Number.pipe(Schema.nonNegative()),
+  experienceYears: ExperienceYears,
   languageLevel: LanguageLevel,
   primaryGenre: VenueType,
-  skills: Schema.Array(SkillId),
+  skills: Schema.Array(SkillId).pipe(Schema.minItems(1)),
   summaryJa: Schema.String,
 });
 export type SkillSet = Schema.Schema.Type<typeof SkillSet>;

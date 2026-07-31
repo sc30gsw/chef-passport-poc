@@ -201,6 +201,36 @@ describe("streamFreeInputEvents — 判定入力はフォームが決める", ()
     expect(scoreOf(business)).toBeGreaterThan(scoreOf(none));
     expect(terminal(none)?.result.skillSet.languageLevel).toBe("none");
   });
+
+  it("経験年数は申告年齢が説明できる上限に丸められる", async () => {
+    vi.stubEnv("AI_GATEWAY_API_KEY", "test-key");
+    const claiming40Years = stubModelLayer({
+      ...STUB_RESPONSES,
+      skillSet: { ...STUB_RESPONSES.skillSet, experienceYears: 40 },
+    });
+
+    const result = terminal(await collect({ ...BASE_REQUEST, age: 25 }, claiming40Years))?.result;
+
+    // 経歴文は経験年数を自己申告できる唯一の判定入力。25歳が説明できるのは 25 - 15 = 10年まで。
+    expect(result?.skillSet.experienceYears).toBe(10);
+  });
+
+  it("丸めた年数で判定する。経験ゲートは経歴文の主張では開かない", async () => {
+    vi.stubEnv("AI_GATEWAY_API_KEY", "test-key");
+    const claiming40Years = stubModelLayer({
+      ...STUB_RESPONSES,
+      skillSet: { ...STUB_RESPONSES.skillSet, experienceYears: 40 },
+    });
+
+    // SG Employment Pass は経験5年が必須。18歳（上限3年）では届かない。
+    const events = await collect({ ...BASE_REQUEST, age: 18 }, claiming40Years);
+    const singapore = terminal(events)?.result.countries.find(
+      (country) => country.country === "SG",
+    );
+    const employmentPass = singapore?.visas.find((visa) => visa.visaId === "sg-employment-pass");
+
+    expect(employmentPass?.blockedReasonsJa.some((reason) => reason.includes("経験"))).toBe(true);
+  });
 });
 
 describe("streamFreeInputEvents — 失敗時の振る舞い", () => {

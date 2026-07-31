@@ -10,6 +10,7 @@ import type {
 import { rankJobMatches } from "~/domain/scoring";
 import { DEMO_COUNTRIES, assessAllCountries } from "~/domain/visa-eligibility";
 import type { FreeInputRequest } from "~/features/passport/types/free-input-request";
+import { MIN_AGE_YEARS } from "~/features/passport/types/free-input-request";
 
 /**
  * The deterministic half of the pipeline, assembled. Nothing in this module touches Effect, a model
@@ -41,6 +42,19 @@ export const FREE_INPUT_PERSONA_ID = "free-input";
 const FREE_INPUT_PERSONA_NAME = "自由入力のシェフ";
 
 /**
+ * The experience a declared age can account for. `MIN_AGE_YEARS` is the youngest the form admits,
+ * so no career it describes can have started earlier.
+ *
+ * `experienceYears` is the one judgement input a stranger's text still supplies — `SkillSet` caps it
+ * at `MAX_EXPERIENCE_YEARS`, but 55 years is only absurd next to the age beside it. Without this a
+ * 25-year-old writing 経験40年 clears every `minExperienceYears` gate and saturates the 20-point
+ * experience term. See audit #16 finding 2.
+ */
+function plausibleExperienceYears(age: number): number {
+  return Math.max(age - MIN_AGE_YEARS, 0);
+}
+
+/**
  * Assembles the `Persona` the deterministic judgement runs on, out of the two halves free input
  * arrives in: what the model read from the résumé, and what the form declared.
  *
@@ -50,7 +64,7 @@ const FREE_INPUT_PERSONA_NAME = "自由入力のシェフ";
 export function personaFromFreeInput(profile: FreeInputRequest, skillSet: SkillSet): Persona {
   return {
     age: profile.age,
-    experienceYears: skillSet.experienceYears,
+    experienceYears: Math.min(skillSet.experienceYears, plausibleExperienceYears(profile.age)),
     hasEvidenceProof: profile.hasEvidenceProof,
     id: FREE_INPUT_PERSONA_ID,
     languageLevel: profile.languageLevel,

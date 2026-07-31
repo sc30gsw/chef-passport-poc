@@ -101,7 +101,10 @@ export function FreeInputForm({
             required
             rows={8}
             label="経歴・職務内容"
-            description={`残り${remaining}文字（${MIN_RESUME_LENGTH}〜${MAX_RESUME_LENGTH}文字）`}
+            // Says out loud which fields the résumé decides. Experience years is a hard visa gate
+            // read out of this text, and it is clamped to what the declared age accounts for —
+            // a judgement input the reader should know is being extracted. See audit #16 finding 2.
+            description={`残り${remaining}文字（${MIN_RESUME_LENGTH}〜${MAX_RESUME_LENGTH}文字）。経験年数・スキル・業態はこの文章から読み取り、経験年数は申告年齢で説明できる範囲に丸めます。`}
             placeholder="担当した料理、使ってきた技法、勤務先の業態や年数などを日本語で書いてください。"
             value={draft.resume}
             error={resumeError}
