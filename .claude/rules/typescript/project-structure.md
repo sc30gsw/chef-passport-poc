@@ -35,9 +35,12 @@ src/
 ├── config/
 ├── lib/                     # runtime.ts (single Layer composition point), ai-client.ts
 ├── testing/                 # setup.ts, server-fn-mock.ts, render helpers
-├── types/
-└── utils/                   # cn.ts (re-exports cnfast)
+└── types/
 ```
+
+There is no `src/utils/`: its only occupant was `cn.ts`, deleted with the `cnfast` dependency by
+closed decision **#12**. Recreate the directory when a shared utility actually exists.
+
 
 `src/domain/` and `src/data/` are additions to bulletproof-react. They sit at the shared bottom because `scripts/` and `features/` both consume them, and because keeping `domain/` free of AI dependencies is the architectural claim this project makes.
 

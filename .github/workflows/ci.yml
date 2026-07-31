@@ -30,4 +30,14 @@ jobs:
           cache: true
       - run: vp check
       - run: vp test
+      # Dead code is a whole-project property, so nothing else catches it: a PR that deletes the
+      # last consumer of an export adds no finding to its own diff. `vp run fallow` already exits
+      # non-zero on any finding and takes ~0.1s, so it is a blocking step from the start — #20 took
+      # the project to zero and this is what holds it there.
+      #
+      # `vp run doctor` deliberately does NOT join this job. react-doctor.yml already gates it with
+      # `blocking: warning` + `scope: full`, and the two runs would not agree: package.json's
+      # `doctor` script passes `--no-lint` while the action scans with lint (11 warnings vs 15 on
+      # the pre-#20 tree — see #20). Two checks disagreeing about the same tool is worse than one.
+      - run: vp run fallow
       - run: vp build

@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { Effect, Schema, Stream } from "effect";
+import { Effect, Layer, Schema } from "effect";
 
 import {
   Job,
@@ -11,8 +11,11 @@ import {
   VisaRequirement,
 } from "../src/data/schemas.ts";
 import { deterministicProse } from "../src/features/passport/api/build-passport.ts";
-import { PassportPipeline, PipelineLive } from "../src/features/passport/api/pipeline-service.ts";
-import { anthropicLayer, extractionModel } from "../src/lib/ai-client.ts";
+import {
+  PipelineLive,
+  runPassportPipeline,
+} from "../src/features/passport/api/pipeline-service.ts";
+import { anthropicLayer, extractionModelLayer, proseModelLayer } from "../src/lib/ai-client.ts";
 
 /**
  * Regenerates the committed pipeline cache. Committed and re-runnable on purpose: it is the evidence
@@ -62,28 +65,23 @@ const personas = PERSONA_IDS.map((id) =>
   decode(Persona, readJson(`personas/${id}.json`), `personas/${id}.json`),
 );
 
-/** Drives the real `PipelineLive` stream, so the cache carries genuinely measured step timings. */
+/**
+ * Drives the real `PipelineLive` stream through the same `PassportPipeline` tag the app resolves, so
+ * the cache carries genuinely measured step timings.
+ *
+ * The Layer stack is composed here rather than taken from `src/lib/runtime.ts` for a reason that is
+ * not a preference: this file runs under plain Node, where the `~/` alias does not resolve and the
+ * statically imported cache JSON that `runtime.ts` pulls in cannot be loaded. The *consumption* is
+ * shared even though the composition cannot be — including the model split, so a regenerated cache
+ * carries sonnet-5 prose exactly as a live run would.
+ */
 function generateLive(persona: Persona): Promise<PassportResult> {
-  const program = Effect.gen(function* () {
-    const pipeline = yield* PassportPipeline;
-    const events = yield* Stream.runCollect(pipeline.run({ jobs, persona, visas, vocabulary }));
-
-    for (const event of events) {
-      if (event._tag === "Completed") return event.result;
-      if (event._tag === "Failed") {
-        return yield* Effect.fail(new Error(`${event.step}: ${event.messageJa}`));
-      }
-    }
-
-    return yield* Effect.fail(new Error("pipeline produced no result"));
-  });
-
   return Effect.runPromise(
-    program.pipe(
+    runPassportPipeline({ jobs, persona, visas, vocabulary }).pipe(
       Effect.provide(PipelineLive),
-      Effect.provide(extractionModel()),
+      Effect.provide(Layer.merge(extractionModelLayer(), proseModelLayer())),
       Effect.provide(anthropicLayer()),
-    ) as Effect.Effect<PassportResult, Error>,
+    ),
   );
 }
 

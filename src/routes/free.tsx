@@ -1,28 +1,31 @@
-import { Alert, Anchor, Container, List, Stack, Text, Title } from "@mantine/core";
+import { Anchor, Container, List, Stack, Text, Title } from "@mantine/core";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
+import { Effect } from "effect";
 
-import { isFreeInputEnabled } from "~/lib/runtime";
+import { loadJobs, loadSkillVocabulary, loadVisaRequirements } from "~/data/loaders";
+import { readFreeInputAvailabilityServer } from "~/features/passport/api/free-input-availability-server";
+import { FreeInputPassport } from "~/features/passport/components/free-input-passport";
+import { MAX_RESUME_LENGTH } from "~/features/passport/types/free-input-request";
 
 /**
- * The flag is read on the server, inside the handler — never at module scope, and never with a
- * `VITE_` prefix, which would ship it to the browser. Free-input mode calls a paid API from a public
- * URL, so it defaults off and the preset personas work without it.
+ * The bundled reference data is joined here rather than inside the component: the loader is the
+ * composition layer, and decoding in a render body re-runs the decode on every streamed event.
  */
-const readFreeInputFlagServer = createServerFn({ method: "GET" }).handler(() => ({
-  enabled: isFreeInputEnabled(),
-}));
-
 export const Route = createFileRoute("/free")({
   component: FreePage,
-  loader: () => readFreeInputFlagServer(),
+  loader: async () => ({
+    ...(await readFreeInputAvailabilityServer()),
+    jobs: Effect.runSync(loadJobs),
+    visas: Effect.runSync(loadVisaRequirements),
+    vocabulary: Effect.runSync(loadSkillVocabulary),
+  }),
 });
 
 function FreePage() {
-  const { enabled } = Route.useLoaderData();
+  const { available, jobs, visas, vocabulary } = Route.useLoaderData();
 
   return (
-    <Container size="sm" py="xl">
+    <Container size="lg" py="xl">
       <Stack gap="lg">
         <Anchor component={Link} to="/">
           ← シェフ選択に戻る
@@ -32,25 +35,21 @@ function FreePage() {
           自由入力モード
         </Title>
 
-        {enabled ? (
-          <Alert color="blue" title="準備中" variant="light">
-            フラグは有効ですが、入力フォームとライブ生成の配線はこのブランチには入っていません。
-            プリセット3人はキャッシュ再生で完全に動作します。
-          </Alert>
-        ) : (
-          <Alert color="gray" title="現在は無効です" variant="light">
-            <Text size="sm">
-              自由入力は公開URLから有料APIを呼ぶため、サーバー側フラグ
-              <code>ENABLE_FREE_INPUT</code>{" "}
-              で既定OFFにしています。有効化には3つのガードが揃っている必要があります。
-            </Text>
-            <List size="sm" mt="sm">
-              <List.Item>サーバー側フラグ（既定OFF）</List.Item>
-              <List.Item>スキーマレベルの文字数上限</List.Item>
-              <List.Item>AI Gateway ダッシュボードの利用上限</List.Item>
-            </List>
-          </Alert>
-        )}
+        <FreeInputPassport
+          available={available}
+          jobs={jobs}
+          visas={visas}
+          vocabulary={vocabulary}
+        />
+
+        <Text fw={600} size="sm">
+          自由入力に必要な3つのガード
+        </Text>
+        <List size="sm">
+          <List.Item>サーバー側のキー有無判定（フラグは廃止）</List.Item>
+          <List.Item>スキーマレベルの文字数上限（{MAX_RESUME_LENGTH}文字）</List.Item>
+          <List.Item>AI Gateway ダッシュボードの利用上限</List.Item>
+        </List>
 
         <Text c="dimmed" size="sm">
           プリセットのシェフは事前生成キャッシュから再生されるため、APIキーもネットワークも不要です。

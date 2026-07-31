@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "entry": [
+    // Vitest global setup, referenced only from vite.config.ts's `test.setupFiles` — a config
+    // reference fallow does not trace. Declaring it as an entry point makes it (and
+    // server-fn-mock.ts, which it side-effect-imports) reachable. See #14.
+    "src/testing/setup.ts",
+    // react-doctor's own config file, discovered by the CLI via filename convention
+    // (doctor.config.ts/.js/.mjs/.json, per `react-doctor --help`) — not an import, so
+    // fallow cannot trace it as reachable on its own. See #14.
+    "doctor.config.ts",
+  ],
+  "ignoreDependencies": [
+    // Activated via tsconfig.json's "libReplacement": true — a TS compiler flag, not an
+    // import, so there is nothing for fallow to trace. See #14.
+    "better-typescript-lib",
+    // Invoked by package.json's "doctor" script (`vp exec react-doctor . ...`) and by
+    // .github/workflows/react-doctor.yml:37 — a CLI tool, not a source import. See #14.
+    "react-doctor",
+    // vite.config.ts:7 imports "nitro/vite" and adds it to `plugins` only when
+    // `process.env.VITEST !== "true"` (vite.config.ts:91-ish `isVitest` guard). It must stay
+    // in `dependencies` for the Vercel deploy — the Nitro plugin is mandatory per
+    // .claude/rules/web/tanstack-start.md. The isVitest guard is what makes fallow read it as
+    // test-only. `ignoreDependencies` doubles as the suppression for both the
+    // unused-dependencies and test-only-dependencies rules (fallow's own --format json fix
+    // suggestion points here). See #14.
+    "nitro",
+  ],
+}

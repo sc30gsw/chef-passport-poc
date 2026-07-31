@@ -20,8 +20,16 @@
 
 Not part of `vp check`. Use `vp run` so installs stay routed through Vite+.
 
-- **Fallow** (`vp run fallow`) — unused files, dependencies, and exports. Use when trimming deps or refactoring entry points (`.fallowrc.json` configures the project).
+- **Fallow** (`vp run fallow`) — unused files, dependencies, and exports. Use when trimming deps or refactoring entry points (`.fallowrc.jsonc` configures the project).
 - **react-doctor** (`vp run doctor`) — React-focused health checks. The script uses `--no-lint`; keep ordinary linting on `vp lint`.
+
+**Both are gated in CI and both are currently at zero.** `ci.yml` runs `vp run fallow` as a
+blocking step; `react-doctor.yml` runs the action with `blocking: warning` + `scope: full`, pinned
+to the same version as `package.json`. Findings this project does not own — build output, vendored
+tool directories — are excluded in `doctor.config.ts` and `.fallowrc.jsonc`, each with a comment
+naming the reason. Note the action scans **with** lint while `vp run doctor` passes `--no-lint`, so
+a clean local `vp run doctor` is necessary but not sufficient; `vp exec react-doctor . --yes` is the
+run that matches CI. See #20.
 
 ## Project rules
 
@@ -43,7 +51,9 @@ Stack-specific conventions live in `.claude/rules/`. Read the ones matching the 
 
 ## Current implementation state
 
-This repo is currently a bare Vite+/TanStack Start scaffold — `src/domain/`, `src/data/`, `src/features/`, and `src/lib/` don't exist yet, and `package.json` has none of `@mantine/core`, `effect`, or `@effect/ai`. `.claude/rules/` and `docs/requirement.md` describe the **target architecture** for the Chef Passport PoC, not code that already exists. Add the dependency before importing from it.
+The bulletproof-react layout from `typescript/project-structure.md` is in place — `src/domain/`, `src/data/`, `src/features/`, and `src/lib/` all exist and are populated — and `package.json` pins `@mantine/core`, `effect`, `@effect/ai`, and `@effect/ai-anthropic`. `.claude/rules/` and `docs/requirement.md` describe the architecture this code already follows, not a future target. A test suite exists and `vp test` is green.
+
+This section intentionally does not enumerate what's built or what's left — that goes stale the moment another issue lands. For current status, in-flight work, and what's still missing, check the issue tracker (map issue #2) rather than this file.
 
 ## Agent skills
 

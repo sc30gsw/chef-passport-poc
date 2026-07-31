@@ -1,5 +1,3 @@
-import { Data, Effect, Schedule } from "effect";
-
 import type {
   Country,
   Job,
@@ -7,39 +5,21 @@ import type {
   Persona,
   SkillSet,
   SkillVocabularyEntry,
-  TranslatedSkill,
   VisaRequirement,
 } from "~/data/schemas";
 import { rankJobMatches } from "~/domain/scoring";
 import { DEMO_COUNTRIES, assessAllCountries } from "~/domain/visa-eligibility";
-import { explainCountry } from "~/features/passport/api/steps/explain-country";
-import { explainJobMatch } from "~/features/passport/api/steps/explain-job-match";
-import { extractSkills } from "~/features/passport/api/steps/extract-skills";
-import { translateSkills } from "~/features/passport/api/steps/translate-skills";
+import type { FreeInputRequest } from "~/features/passport/types/free-input-request";
+import { MIN_AGE_YEARS } from "~/features/passport/types/free-input-request";
 
 /**
- * The four steps composed, with the deterministic/LLM boundary visible in the code: every value
- * that affects an outcome comes from `src/domain/`, and every `Effect` that touches a model returns
- * only a string.
+ * The deterministic half of the pipeline, assembled. Nothing in this module touches Effect, a model
+ * or the network: every value that affects an outcome comes from `src/domain/`, which is what makes
+ * the judgement provable without a harness.
+ *
+ * The live pipeline lives in `pipeline-service.ts` and calls straight into `assessDeterministically`
+ * for exactly these numbers, so there is one implementation of the judgement and not two.
  */
-export class PipelineError extends Data.TaggedError("PipelineError")<{
-  cause?: unknown;
-  messageJa: string;
-  step: string;
-}> {}
-
-/** The gateway documents model fallback but not retries — those are ours to write. */
-const RESILIENCE = Schedule.exponential("500 millis").pipe(Schedule.intersect(Schedule.recurs(2)));
-
-function resilient<A, E, R>(step: string, effect: Effect.Effect<A, E, R>) {
-  return effect.pipe(
-    Effect.timeout("30 seconds"),
-    Effect.retry(RESILIENCE),
-    Effect.mapError(
-      (cause) => new PipelineError({ cause, messageJa: `${step}の生成に失敗しました`, step }),
-    ),
-  );
-}
 
 export type PassportInputs = {
   readonly jobs: readonly Job[];
@@ -47,6 +27,53 @@ export type PassportInputs = {
   readonly visas: readonly VisaRequirement[];
   readonly vocabulary: readonly SkillVocabularyEntry[];
 };
+
+/**
+ * Free input's inputs: the same static data, but no `Persona` yet. Step 1 has to run before one
+ * exists, because a résumé is the only thing the caller supplied.
+ */
+export type FreeInputInputs = Omit<PassportInputs, "persona"> & {
+  readonly profile: FreeInputRequest;
+};
+
+/** Not a real chef, and never rendered as one — the UI labels free-input runs from this id. */
+export const FREE_INPUT_PERSONA_ID = "free-input";
+
+const FREE_INPUT_PERSONA_NAME = "自由入力のシェフ";
+
+/**
+ * The experience a declared age can account for. `MIN_AGE_YEARS` is the youngest the form admits,
+ * so no career it describes can have started earlier.
+ *
+ * `experienceYears` is the one judgement input a stranger's text still supplies — `SkillSet` caps it
+ * at `MAX_EXPERIENCE_YEARS`, but 55 years is only absurd next to the age beside it. Without this a
+ * 25-year-old writing 経験40年 clears every `minExperienceYears` gate and saturates the 20-point
+ * experience term. See audit #16 finding 2.
+ */
+function plausibleExperienceYears(age: number): number {
+  return Math.max(age - MIN_AGE_YEARS, 0);
+}
+
+/**
+ * Assembles the `Persona` the deterministic judgement runs on, out of the two halves free input
+ * arrives in: what the model read from the résumé, and what the form declared.
+ *
+ * Pure and synchronous on purpose. Nothing here decides anything — it only says which half owns
+ * which field, and `free-input-request.ts` records why the split falls where it does.
+ */
+export function personaFromFreeInput(profile: FreeInputRequest, skillSet: SkillSet): Persona {
+  return {
+    age: profile.age,
+    experienceYears: Math.min(skillSet.experienceYears, plausibleExperienceYears(profile.age)),
+    hasEvidenceProof: profile.hasEvidenceProof,
+    id: FREE_INPUT_PERSONA_ID,
+    languageLevel: profile.languageLevel,
+    name: FREE_INPUT_PERSONA_NAME,
+    primaryGenre: skillSet.primaryGenre,
+    resumeJa: profile.resume,
+    skills: skillSet.skills,
+  };
+}
 
 /** The deterministic half. No Effect, no model, no network. */
 export function assessDeterministically(inputs: Omit<PassportInputs, "vocabulary">) {
@@ -72,7 +99,7 @@ export function deterministicProse(inputs: Omit<PassportInputs, "vocabulary">): 
   const { persona } = inputs;
   const { countries, excluded, matches } = assessDeterministically(inputs);
 
-  const skillSet: SkillSet = {
+  const skillSet = {
     experienceYears: persona.experienceYears,
     languageLevel: persona.languageLevel,
     primaryGenre: persona.primaryGenre,
@@ -104,64 +131,4 @@ export function deterministicProse(inputs: Omit<PassportInputs, "vocabulary">): 
     timings: [],
     translatedSkills: [],
   };
-}
-
-/**
- * Live pipeline. Judgement is computed first, then the model is asked for prose *about the result*
- * — never the other way round.
- */
-export function buildPassport(inputs: PassportInputs) {
-  return Effect.gen(function* () {
-    const { jobs, persona, visas, vocabulary } = inputs;
-
-    const skillSet = yield* resilient("スキル抽出", extractSkills(persona.resumeJa, vocabulary));
-
-    const { countries, excluded, matches } = assessDeterministically(inputs);
-
-    const translatedSkills: readonly TranslatedSkill[] = yield* resilient(
-      "スキル翻訳",
-      translateSkills(skillSet.skills, vocabulary),
-    );
-
-    const explainedCountries = yield* Effect.all(
-      countries.map((assessment) =>
-        resilient(
-          "適合理由",
-          explainCountry(
-            persona,
-            assessment,
-            visas.filter((visa) => visa.country === assessment.country),
-          ),
-        ).pipe(Effect.map((explanationJa) => ({ ...assessment, explanationJa }))),
-      ),
-    );
-
-    const explainedMatches = yield* Effect.all(
-      matches.map((match) => {
-        const job = jobs.find((item) => item.id === match.jobId);
-        if (job === undefined) {
-          return Effect.fail(
-            new PipelineError({
-              messageJa: `求人 ${match.jobId} が見つかりません`,
-              step: "マッチング",
-            }),
-          );
-        }
-        return resilient("マッチ理由", explainJobMatch(persona, job, match)).pipe(
-          Effect.map((reasonJa) => ({ ...match, reasonJa })),
-        );
-      }),
-    );
-
-    return {
-      countries: explainedCountries,
-      excludedJobs: excluded,
-      jobMatches: explainedMatches,
-      personaId: persona.id,
-      proseSource: "llm",
-      skillSet,
-      timings: [],
-      translatedSkills,
-    } satisfies PassportResult;
-  });
 }

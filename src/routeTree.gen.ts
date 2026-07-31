@@ -11,7 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as FreeRouteImport } from './routes/free'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PassportPersonaIdRouteImport } from './routes/passport.$personaId'
+import { Route as PassportsPersonaIdRouteImport } from './routes/passports/$personaId'
 
 const FreeRoute = FreeRouteImport.update({
   id: '/free',
@@ -23,40 +23,40 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PassportPersonaIdRoute = PassportPersonaIdRouteImport.update({
-  id: '/passport/$personaId',
-  path: '/passport/$personaId',
+const PassportsPersonaIdRoute = PassportsPersonaIdRouteImport.update({
+  id: '/passports/$personaId',
+  path: '/passports/$personaId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/free': typeof FreeRoute
-  '/passport/$personaId': typeof PassportPersonaIdRoute
+  '/passports/$personaId': typeof PassportsPersonaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/free': typeof FreeRoute
-  '/passport/$personaId': typeof PassportPersonaIdRoute
+  '/passports/$personaId': typeof PassportsPersonaIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/free': typeof FreeRoute
-  '/passport/$personaId': typeof PassportPersonaIdRoute
+  '/passports/$personaId': typeof PassportsPersonaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/free' | '/passport/$personaId'
+  fullPaths: '/' | '/free' | '/passports/$personaId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/free' | '/passport/$personaId'
-  id: '__root__' | '/' | '/free' | '/passport/$personaId'
+  to: '/' | '/free' | '/passports/$personaId'
+  id: '__root__' | '/' | '/free' | '/passports/$personaId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FreeRoute: typeof FreeRoute
-  PassportPersonaIdRoute: typeof PassportPersonaIdRoute
+  PassportsPersonaIdRoute: typeof PassportsPersonaIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,11 +75,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/passport/$personaId': {
-      id: '/passport/$personaId'
-      path: '/passport/$personaId'
-      fullPath: '/passport/$personaId'
-      preLoaderRoute: typeof PassportPersonaIdRouteImport
+    '/passports/$personaId': {
+      id: '/passports/$personaId'
+      path: '/passports/$personaId'
+      fullPath: '/passports/$personaId'
+      preLoaderRoute: typeof PassportsPersonaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -88,7 +88,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FreeRoute: FreeRoute,
-  PassportPersonaIdRoute: PassportPersonaIdRoute,
+  PassportsPersonaIdRoute: PassportsPersonaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -2,20 +2,60 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it } from "vite-plus/test";
 
-import type { PassportView } from "~/features/passport/api/passport-server";
-import { loadPassportView } from "~/features/passport/api/passport-server";
+import { loadPassportView } from "~/features/passport/api/passport-view";
 import { PassportDashboard } from "~/features/passport/components/passport-dashboard";
+import type { PassportView } from "~/features/passport/utils/join-passport-view";
+import { passportPipelineFromCache } from "~/lib/runtime";
 import { renderWithMantine } from "~/testing/render";
 
 let satoView: PassportView;
 let takahashiView: PassportView;
 
+/** Fixtures come through the same Layer the server function uses, so they cannot drift from it. */
+const preset = passportPipelineFromCache({ paced: false });
+
 beforeAll(async () => {
-  const sato = await loadPassportView("sato-takumi");
-  const takahashi = await loadPassportView("takahashi-kenta");
+  const sato = await loadPassportView("sato-takumi", preset);
+  const takahashi = await loadPassportView("takahashi-kenta", preset);
   if (!sato.ok || !takahashi.ok) throw new Error("fixture views failed to load");
   satoView = sato.data;
   takahashiView = takahashi.data;
+});
+
+describe("PassportDashboard の見出しと焦点", () => {
+  it("画面のh1は各ルートが持つので、ダッシュボードはh2から始まる", () => {
+    // 監査 #17 finding 10/11。以前は h1 で、/free ではルートの h1 と二重になり、
+    // /passport/$personaId ではタイムライン表示中だけ h1 が存在しない状態だった。
+    renderWithMantine(<PassportDashboard view={satoView} />);
+
+    expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: `${satoView.persona.name} の Chef Passport` }),
+    ).toBeInTheDocument();
+  });
+
+  it("節の見出しはh3、国カードはh4と、飛ばさず下がる", () => {
+    renderWithMantine(<PassportDashboard view={satoView} />);
+
+    expect(screen.getByRole("heading", { level: 3, name: "国別の適合度" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 3, name: "スキルの現地語翻訳" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 4, name: "シンガポール" })).toBeInTheDocument();
+  });
+
+  it("差し替わった直後、焦点はダッシュボードの先頭に移る", () => {
+    // 監査 #17 finding 8。完了時にタイムラインが外れると焦点が body に落ち、
+    // キーボード利用者は何の通知もなく文書の先頭からタブし直しになっていた。
+    renderWithMantine(<PassportDashboard view={satoView} />);
+
+    const heading = screen.getByRole("heading", {
+      level: 2,
+      name: `${satoView.persona.name} の Chef Passport`,
+    });
+
+    expect(document.activeElement).toBe(heading.closest("header"));
+  });
 });
 
 describe("PassportDashboard", () => {
@@ -31,9 +71,9 @@ describe("PassportDashboard", () => {
     renderWithMantine(<PassportDashboard view={satoView} />);
 
     // 等級はドメインロジックが決めた値。UIはそれをそのまま出すだけ。
-    expect(screen.getByLabelText("シンガポールの適合度 ◎")).toBeInTheDocument();
-    expect(screen.getByLabelText("オーストラリアの適合度 ○")).toBeInTheDocument();
-    expect(screen.getByLabelText("アメリカの適合度 △")).toBeInTheDocument();
+    expect(screen.getByText("シンガポールの適合度 ◎")).toBeInTheDocument();
+    expect(screen.getByText("オーストラリアの適合度 ○")).toBeInTheDocument();
+    expect(screen.getByText("アメリカの適合度 △")).toBeInTheDocument();
   });
 
   it("全ビザカードに出典の外部リンクがある", () => {
