@@ -1,1 +1,5 @@
-@import "tailwindcss";
+/* Single CSS entry point. `tailwind-preset-mantine` already imports Tailwind's layers and
+   Mantine's `styles.layer.css`, and declares `@layer theme, base, mantine, components,
+   utilities`. Importing "tailwindcss" or "@mantine/core/styles.css" here breaks specificity.
+   See .claude/rules/web/mantine-tailwind.md. */
+@import "tailwind-preset-mantine";

@@ -9,38 +9,65 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as FreeRouteImport } from './routes/free'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PassportsPersonaIdRouteImport } from './routes/passports/$personaId'
 
+const FreeRoute = FreeRouteImport.update({
+  id: '/free',
+  path: '/free',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PassportsPersonaIdRoute = PassportsPersonaIdRouteImport.update({
+  id: '/passports/$personaId',
+  path: '/passports/$personaId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/free': typeof FreeRoute
+  '/passports/$personaId': typeof PassportsPersonaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/free': typeof FreeRoute
+  '/passports/$personaId': typeof PassportsPersonaIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/free': typeof FreeRoute
+  '/passports/$personaId': typeof PassportsPersonaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/free' | '/passports/$personaId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/free' | '/passports/$personaId'
+  id: '__root__' | '/' | '/free' | '/passports/$personaId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FreeRoute: typeof FreeRoute
+  PassportsPersonaIdRoute: typeof PassportsPersonaIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/free': {
+      id: '/free'
+      path: '/free'
+      fullPath: '/free'
+      preLoaderRoute: typeof FreeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/passports/$personaId': {
+      id: '/passports/$personaId'
+      path: '/passports/$personaId'
+      fullPath: '/passports/$personaId'
+      preLoaderRoute: typeof PassportsPersonaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FreeRoute: FreeRoute,
+  PassportsPersonaIdRoute: PassportsPersonaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

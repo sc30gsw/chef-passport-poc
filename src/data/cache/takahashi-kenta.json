@@ -1,0 +1,255 @@
+{
+  "countries": [
+    {
+      "bestVisaId": null,
+      "country": "SG",
+      "grade": "△",
+      "score": 0,
+      "sponsorFreeEligible": false,
+      "visas": [
+        {
+          "blockedReasonsJa": [
+            "到達可能な月額 3100 SGD が給与下限 5600 SGD に届かない"
+          ],
+          "eligible": false,
+          "score": 35,
+          "visaId": "sg-employment-pass"
+        },
+        {
+          "blockedReasonsJa": [
+            "到達可能な月額 3100 SGD が給与下限 3300 SGD に届かない"
+          ],
+          "eligible": false,
+          "score": 35,
+          "visaId": "sg-s-pass"
+        }
+      ],
+      "explanationJa": "適合するビザがありません。理由: 到達可能な月額 3100 SGD が給与下限 5600 SGD に届かない / 到達可能な月額 3100 SGD が給与下限 3300 SGD に届かない"
+    },
+    {
+      "bestVisaId": "au-417-working-holiday",
+      "country": "AU",
+      "grade": "○",
+      "score": 44,
+      "sponsorFreeEligible": true,
+      "visas": [
+        {
+          "blockedReasonsJa": [
+            "到達可能な月額 5667 AUD が給与下限 6376 AUD に届かない"
+          ],
+          "eligible": false,
+          "score": 39,
+          "visaId": "au-482-skills-in-demand"
+        },
+        {
+          "blockedReasonsJa": [],
+          "eligible": true,
+          "score": 44,
+          "visaId": "au-417-working-holiday"
+        }
+      ],
+      "explanationJa": "適合度 ○。スコア 44 で au-417-working-holiday が通ります。"
+    },
+    {
+      "bestVisaId": null,
+      "country": "US",
+      "grade": "△",
+      "score": 0,
+      "sponsorFreeEligible": false,
+      "visas": [
+        {
+          "blockedReasonsJa": [
+            "季節性のある一時的な求人が前提だが、対象求人はすべて通年の常勤ポジション"
+          ],
+          "eligible": false,
+          "score": 58,
+          "visaId": "us-h2b"
+        },
+        {
+          "blockedReasonsJa": [
+            "経験6年が必要年数8年に届かない",
+            "受賞歴・メディア掲載などの卓越性を立証する実績がない",
+            "到達可能な月額 5200 USD が給与下限 6000 USD に届かない"
+          ],
+          "eligible": false,
+          "score": 38,
+          "visaId": "us-o1"
+        }
+      ],
+      "explanationJa": "適合するビザがありません。理由: 季節性のある一時的な求人が前提だが、対象求人はすべて通年の常勤ポジション / 経験6年が必要年数8年に届かない / 受賞歴・メディア掲載などの卓越性を立証する実績がない / 到達可能な月額 5200 USD が給与下限 6000 USD に届かない"
+    }
+  ],
+  "excludedJobs": [
+    {
+      "jobId": "sg-french-finedining",
+      "reasonJa": "ビザスポンサー不可の求人。この国で取得可能なスポンサー不要のビザがないため対象外"
+    },
+    {
+      "jobId": "us-french-seattle",
+      "reasonJa": "ビザスポンサー不可の求人。この国で取得可能なスポンサー不要のビザがないため対象外"
+    }
+  ],
+  "jobMatches": [
+    {
+      "jobId": "au-ramen-brisbane",
+      "notesJa": [
+        "要求語学「簡単な英会話」に対して「ほぼ不可」のため語学面で減点"
+      ],
+      "score": 77,
+      "reasonJa": "スコア 77。要求語学「簡単な英会話」に対して「ほぼ不可」のため語学面で減点。"
+    },
+    {
+      "jobId": "us-ramen-sf",
+      "notesJa": [
+        "要求語学「日常会話レベル」に対して「ほぼ不可」のため語学面で減点"
+      ],
+      "score": 77,
+      "reasonJa": "スコア 77。要求語学「日常会話レベル」に対して「ほぼ不可」のため語学面で減点。"
+    },
+    {
+      "jobId": "sg-ramen-orchard",
+      "notesJa": [
+        "要求語学「簡単な英会話」に対して「ほぼ不可」のため語学面で減点"
+      ],
+      "score": 74,
+      "reasonJa": "スコア 74。要求語学「簡単な英会話」に対して「ほぼ不可」のため語学面で減点。"
+    },
+    {
+      "jobId": "sg-sushi-cbd",
+      "notesJa": [
+        "必要スキル4件のうち4件が未充足",
+        "要求語学「ビジネスレベル」に対して「ほぼ不可」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 35,
+      "reasonJa": "スコア 35。必要スキル4件のうち4件が未充足、要求語学「ビジネスレベル」に対して「ほぼ不可」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "us-sushi-la",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "要求語学「ビジネスレベル」に対して「ほぼ不可」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 35,
+      "reasonJa": "スコア 35。必要スキル3件のうち3件が未充足、要求語学「ビジネスレベル」に対して「ほぼ不可」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "sg-hotel-washoku",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "要求語学「日常会話レベル」に対して「ほぼ不可」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 34,
+      "reasonJa": "スコア 34。必要スキル3件のうち3件が未充足、要求語学「日常会話レベル」に対して「ほぼ不可」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "au-hotel-sydney",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "要求語学「日常会話レベル」に対して「ほぼ不可」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 33,
+      "reasonJa": "スコア 33。必要スキル3件のうち3件が未充足、要求語学「日常会話レベル」に対して「ほぼ不可」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "us-kaiseki-ny",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "必要経験8年に対して6年で不足",
+        "要求語学「ビジネスレベル」に対して「ほぼ不可」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 30,
+      "reasonJa": "スコア 30。必要スキル3件のうち3件が未充足、必要経験8年に対して6年で不足、要求語学「ビジネスレベル」に対して「ほぼ不可」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "au-bistro-melbourne",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "要求語学「ビジネスレベル」に対して「ほぼ不可」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 29,
+      "reasonJa": "スコア 29。必要スキル3件のうち3件が未充足、要求語学「ビジネスレベル」に対して「ほぼ不可」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "au-french-sydney",
+      "notesJa": [
+        "必要スキル2件のうち2件が未充足",
+        "要求語学「日常会話レベル」に対して「ほぼ不可」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 29,
+      "reasonJa": "スコア 29。必要スキル2件のうち2件が未充足、要求語学「日常会話レベル」に対して「ほぼ不可」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "sg-bistro-tanjong",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "要求語学「ビジネスレベル」に対して「ほぼ不可」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 28,
+      "reasonJa": "スコア 28。必要スキル3件のうち3件が未充足、要求語学「ビジネスレベル」に対して「ほぼ不可」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "au-sushi-melbourne",
+      "notesJa": [
+        "必要スキル4件のうち4件が未充足",
+        "必要経験10年に対して6年で不足",
+        "要求語学「ビジネスレベル」に対して「ほぼ不可」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 26,
+      "reasonJa": "スコア 26。必要スキル4件のうち4件が未充足、必要経験10年に対して6年で不足、要求語学「ビジネスレベル」に対して「ほぼ不可」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "us-bistro-chicago",
+      "notesJa": [
+        "必要スキル2件のうち2件が未充足",
+        "要求語学「簡単な英会話」に対して「ほぼ不可」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 26,
+      "reasonJa": "スコア 26。必要スキル2件のうち2件が未充足、要求語学「簡単な英会話」に対して「ほぼ不可」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    }
+  ],
+  "personaId": "takahashi-kenta",
+  "proseSource": "deterministic",
+  "skillSet": {
+    "experienceYears": 6,
+    "languageLevel": "none",
+    "primaryGenre": "ramen",
+    "skills": [
+      "broth-large-batch",
+      "noodle-selection",
+      "chashu-preparation",
+      "store-operations",
+      "inventory-cost-control",
+      "staff-training"
+    ],
+    "summaryJa": "経験6年、ramenを専門とするシェフ。"
+  },
+  "timings": [
+    {
+      "durationMs": 0,
+      "step": "extract"
+    },
+    {
+      "durationMs": 0.15643100000011145,
+      "step": "visa"
+    },
+    {
+      "durationMs": 0,
+      "step": "translate"
+    },
+    {
+      "durationMs": 0,
+      "step": "match"
+    }
+  ],
+  "translatedSkills": []
+}

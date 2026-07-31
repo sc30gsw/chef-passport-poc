@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "tanstack-start",
+  "installCommand": "corepack enable && corepack install && pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm run build"
+}

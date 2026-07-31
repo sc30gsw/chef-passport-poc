@@ -1,0 +1,236 @@
+{
+  "countries": [
+    {
+      "bestVisaId": "sg-s-pass",
+      "country": "SG",
+      "grade": "◎",
+      "score": 90,
+      "sponsorFreeEligible": false,
+      "visas": [
+        {
+          "blockedReasonsJa": [],
+          "eligible": true,
+          "score": 86,
+          "visaId": "sg-employment-pass"
+        },
+        {
+          "blockedReasonsJa": [],
+          "eligible": true,
+          "score": 90,
+          "visaId": "sg-s-pass"
+        }
+      ],
+      "explanationJa": "適合度 ◎。スコア 90 で sg-s-pass が通ります。"
+    },
+    {
+      "bestVisaId": "au-482-skills-in-demand",
+      "country": "AU",
+      "grade": "○",
+      "score": 64,
+      "sponsorFreeEligible": false,
+      "visas": [
+        {
+          "blockedReasonsJa": [],
+          "eligible": true,
+          "score": 64,
+          "visaId": "au-482-skills-in-demand"
+        },
+        {
+          "blockedReasonsJa": [
+            "32歳のため年齢上限30歳を超過"
+          ],
+          "eligible": false,
+          "score": 68,
+          "visaId": "au-417-working-holiday"
+        }
+      ],
+      "explanationJa": "適合度 ○。スコア 64 で au-482-skills-in-demand が通ります。"
+    },
+    {
+      "bestVisaId": null,
+      "country": "US",
+      "grade": "△",
+      "score": 0,
+      "sponsorFreeEligible": false,
+      "visas": [
+        {
+          "blockedReasonsJa": [
+            "季節性のある一時的な求人が前提だが、対象求人はすべて通年の常勤ポジション"
+          ],
+          "eligible": false,
+          "score": 89,
+          "visaId": "us-h2b"
+        },
+        {
+          "blockedReasonsJa": [
+            "受賞歴・メディア掲載などの卓越性を立証する実績がない"
+          ],
+          "eligible": false,
+          "score": 82,
+          "visaId": "us-o1"
+        }
+      ],
+      "explanationJa": "適合するビザがありません。理由: 季節性のある一時的な求人が前提だが、対象求人はすべて通年の常勤ポジション / 受賞歴・メディア掲載などの卓越性を立証する実績がない"
+    }
+  ],
+  "excludedJobs": [
+    {
+      "jobId": "sg-french-finedining",
+      "reasonJa": "ビザスポンサー不可の求人。この国で取得可能なスポンサー不要のビザがないため対象外"
+    },
+    {
+      "jobId": "au-french-sydney",
+      "reasonJa": "ビザスポンサー不可の求人。この国で取得可能なスポンサー不要のビザがないため対象外"
+    },
+    {
+      "jobId": "us-french-seattle",
+      "reasonJa": "ビザスポンサー不可の求人。この国で取得可能なスポンサー不要のビザがないため対象外"
+    }
+  ],
+  "jobMatches": [
+    {
+      "jobId": "sg-hotel-washoku",
+      "notesJa": [
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 94,
+      "reasonJa": "スコア 94。専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "au-hotel-sydney",
+      "notesJa": [
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 93,
+      "reasonJa": "スコア 93。専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "sg-sushi-cbd",
+      "notesJa": [
+        "要求語学「ビジネスレベル」に対して「日常会話レベル」のため語学面で減点"
+      ],
+      "score": 93,
+      "reasonJa": "スコア 93。要求語学「ビジネスレベル」に対して「日常会話レベル」のため語学面で減点。"
+    },
+    {
+      "jobId": "us-sushi-la",
+      "notesJa": [
+        "要求語学「ビジネスレベル」に対して「日常会話レベル」のため語学面で減点"
+      ],
+      "score": 93,
+      "reasonJa": "スコア 93。要求語学「ビジネスレベル」に対して「日常会話レベル」のため語学面で減点。"
+    },
+    {
+      "jobId": "au-sushi-melbourne",
+      "notesJa": [
+        "必要経験10年に対して8年で不足",
+        "要求語学「ビジネスレベル」に対して「日常会話レベル」のため語学面で減点"
+      ],
+      "score": 89,
+      "reasonJa": "スコア 89。必要経験10年に対して8年で不足、要求語学「ビジネスレベル」に対して「日常会話レベル」のため語学面で減点。"
+    },
+    {
+      "jobId": "us-kaiseki-ny",
+      "notesJa": [
+        "要求語学「ビジネスレベル」に対して「日常会話レベル」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 88,
+      "reasonJa": "スコア 88。要求語学「ビジネスレベル」に対して「日常会話レベル」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "au-ramen-brisbane",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 52,
+      "reasonJa": "スコア 52。必要スキル3件のうち3件が未充足、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "us-ramen-sf",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 52,
+      "reasonJa": "スコア 52。必要スキル3件のうち3件が未充足、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "sg-ramen-orchard",
+      "notesJa": [
+        "必要スキル4件のうち4件が未充足",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 49,
+      "reasonJa": "スコア 49。必要スキル4件のうち4件が未充足、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "us-bistro-chicago",
+      "notesJa": [
+        "必要スキル2件のうち2件が未充足",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 46,
+      "reasonJa": "スコア 46。必要スキル2件のうち2件が未充足、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "au-bistro-melbourne",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "要求語学「ビジネスレベル」に対して「日常会話レベル」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 42,
+      "reasonJa": "スコア 42。必要スキル3件のうち3件が未充足、要求語学「ビジネスレベル」に対して「日常会話レベル」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    },
+    {
+      "jobId": "sg-bistro-tanjong",
+      "notesJa": [
+        "必要スキル3件のうち3件が未充足",
+        "要求語学「ビジネスレベル」に対して「日常会話レベル」のため語学面で減点",
+        "専門ジャンルとの一致度が低い"
+      ],
+      "score": 42,
+      "reasonJa": "スコア 42。必要スキル3件のうち3件が未充足、要求語学「ビジネスレベル」に対して「日常会話レベル」のため語学面で減点、専門ジャンルとの一致度が低い。"
+    }
+  ],
+  "personaId": "sato-takumi",
+  "proseSource": "deterministic",
+  "skillSet": {
+    "experienceYears": 8,
+    "languageLevel": "conversational",
+    "primaryGenre": "sushi",
+    "skills": [
+      "sashimi-slicing",
+      "yanagiba-knife",
+      "fish-butchery",
+      "nigiri-forming",
+      "omakase-course-design",
+      "kaiseki-course-composition",
+      "dashi-preparation",
+      "seasonal-menu-design",
+      "kitchen-hygiene-haccp"
+    ],
+    "summaryJa": "経験8年、sushiを専門とするシェフ。"
+  },
+  "timings": [
+    {
+      "durationMs": 0,
+      "step": "extract"
+    },
+    {
+      "durationMs": 15.856222000000116,
+      "step": "visa"
+    },
+    {
+      "durationMs": 0,
+      "step": "translate"
+    },
+    {
+      "durationMs": 0,
+      "step": "match"
+    }
+  ],
+  "translatedSkills": []
+}

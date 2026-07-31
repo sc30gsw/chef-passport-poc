@@ -34,20 +34,25 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Graduated from advisory to blocking by #20, which took the project to zero warnings.
+      #
+      # `blocking: warning`, not `error`: every finding this project has ever had was a *warning*
+      # (unused exports, unused files, no-multi-comp), so `error` would gate on a severity nothing
+      # here produces and would let the count drift back up unnoticed. Only `warning` pins zero.
+      #
+      # `scope: full`, not the changed-files default: dead code is a whole-project property. A PR
+      # that deletes the last consumer of an export adds no finding to its own diff, and a
+      # changed-files scan would miss it — which is precisely how the 18-warning baseline
+      # accumulated. Full scan on a repo this size costs seconds.
+      #
+      # Files this gate must not judge (build output, vendored tool dirs) are excluded in
+      # doctor.config.ts, which the action reads. Note the action runs *with* lint, unlike
+      # package.json's `doctor` script — see #20's answer on `--no-lint`.
       - uses: millionco/react-doctor@v2
-        # Advisory by default: React Doctor reports findings on every PR — a
-        # sticky summary comment, inline review comments, and a commit status
-        # with the health score — but never fails the check, so it won't red-X
-        # a teammate's PR on day one. When your team trusts the signal, graduate
-        # the gate: uncomment the block below and set blocking to "error" (fail
-        # on new error-severity findings) or "warning" (fail on any finding).
-        # Full reference: https://www.react.doctor/ci
-        # with:
-        #   blocking: error          # Gate level: "none" (advisory, the default) | "warning" | "error"
-        #   scope: full              # On PRs, scan the whole project instead of just changed files
-        #   comment: false           # Disable the sticky PR summary comment
-        #   review-comments: false   # Disable inline review comments on changed lines
-        #   commit-status: false     # Disable the commit status (score + counts, links to the run)
-        #   version: "0.4.0"         # Pin to a specific react-doctor version instead of "latest"
-        #   directory: apps/web      # Scan a sub-directory (default: ".")
-        #   project: "web,admin"     # In a monorepo, scan specific workspace project(s)
+        with:
+          blocking: warning
+          scope: full
+          # Pinned to the version in package.json's devDependencies. With `blocking: warning` an
+          # unpinned `latest` means a react-doctor release can red-X an unrelated PR, and a local
+          # run can disagree with CI. Bumping both together is a deliberate act, not a surprise.
+          version: "0.5.8"
