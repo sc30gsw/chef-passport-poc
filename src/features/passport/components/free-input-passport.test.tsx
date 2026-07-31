@@ -108,13 +108,13 @@ describe("FreeInputPassport — ライブ生成", () => {
 
     // 1件目が届いた時点で画面が進む。全部届いてからではない。
     expect(await screen.findByText("実測 111ms")).toBeInTheDocument();
-    expect(screen.getAllByLabelText("完了")).toHaveLength(1);
+    expect(screen.getAllByRole("listitem", { name: /: 完了$/ })).toHaveLength(1);
     expect(screen.queryByText("実測 222ms")).not.toBeInTheDocument();
 
     first.open();
 
     expect(await screen.findByText("実測 222ms")).toBeInTheDocument();
-    expect(screen.getAllByLabelText("完了")).toHaveLength(2);
+    expect(screen.getAllByRole("listitem", { name: /: 完了$/ })).toHaveLength(2);
 
     second.open();
 

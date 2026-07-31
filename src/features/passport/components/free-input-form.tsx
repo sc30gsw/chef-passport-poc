@@ -1,55 +1,35 @@
-import { Button, Checkbox, NumberInput, Paper, Radio, Stack, Textarea, Title } from "@mantine/core";
-import { Either, Schema } from "effect";
+import {
+  Alert,
+  Button,
+  Checkbox,
+  List,
+  NumberInput,
+  Paper,
+  Radio,
+  Stack,
+  Textarea,
+  Title,
+} from "@mantine/core";
+import { Either } from "effect";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
 import { LANGUAGE_LABELS_JA, LANGUAGE_LEVEL_ORDER } from "~/domain/language-level";
 import type { FreeInputRequest } from "~/features/passport/types/free-input-request";
 import {
-  FreeInputRequest as FreeInputRequestSchema,
   MAX_AGE_YEARS,
   MAX_RESUME_LENGTH,
   MIN_AGE_YEARS,
   MIN_RESUME_LENGTH,
 } from "~/features/passport/types/free-input-request";
-
-const decodeRequest = Schema.decodeUnknownEither(FreeInputRequestSchema);
-
-/**
- * The draft is one value rather than four `useState` calls: the four fields are decoded together as
- * a single request, so they change together and there is nothing to gain from separate renders.
- *
- * Nothing is pre-filled. `age` and `languageLevel` are judgement inputs — the 417 age cap fires on
- * one and 30% of the visa fit score rides on the other — so a default would be the form quietly
- * deciding something the user never declared. See types/free-input-request.ts.
- */
-const EMPTY_DRAFT = {
-  age: "" as number | string,
-  hasEvidenceProof: false,
-  languageLevel: "",
-  resume: "",
-};
-
-type Draft = typeof EMPTY_DRAFT;
-
-function resumeErrorJa(resume: string, showRequired: boolean) {
-  if (resume.length > MAX_RESUME_LENGTH) {
-    return `上限を${resume.length - MAX_RESUME_LENGTH}文字超えています`;
-  }
-
-  return showRequired && resume.length < MIN_RESUME_LENGTH
-    ? `${MIN_RESUME_LENGTH}文字以上入力してください`
-    : undefined;
-}
-
-function ageErrorJa(age: number | string, showRequired: boolean) {
-  if (!showRequired) return undefined;
-  if (typeof age !== "number" || !Number.isInteger(age)) return "年齢を整数で入力してください";
-
-  return age < MIN_AGE_YEARS || age > MAX_AGE_YEARS
-    ? `年齢は${MIN_AGE_YEARS}〜${MAX_AGE_YEARS}の範囲で入力してください`
-    : undefined;
-}
+import type { FreeInputDraft } from "~/features/passport/utils/free-input-draft";
+import {
+  EMPTY_DRAFT,
+  ageErrorJa,
+  decodeFreeInputDraft,
+  languageLevelErrorJa,
+  resumeErrorJa,
+} from "~/features/passport/utils/free-input-draft";
 
 /**
  * Screen 1's other entrance. The résumé is prose the model reads; everything beside it is a
@@ -66,17 +46,31 @@ function ageErrorJa(age: number | string, showRequired: boolean) {
 export function FreeInputForm({
   onSubmit,
   pending,
-}: {
-  readonly onSubmit: (request: FreeInputRequest) => void;
-  readonly pending: boolean;
-}) {
-  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+}: Record<"onSubmit", (request: FreeInputRequest) => void> & Record<"pending", boolean>) {
+  const [draft, setDraft] = useState<FreeInputDraft>(EMPTY_DRAFT);
   const [attempted, setAttempted] = useState(false);
 
   const remaining = MAX_RESUME_LENGTH - draft.resume.length;
   const overCap = remaining < 0;
 
-  function update(patch: Partial<Draft>) {
+  const resumeError = resumeErrorJa(draft.resume, attempted);
+  const ageError = ageErrorJa(draft.age, attempted);
+  const languageLevelError = languageLevelErrorJa(draft.languageLevel, attempted);
+
+  // The field messages are a hand-maintained superset of the schema, and the schema is what
+  // decides. When they disagree — the day the schema gains a constraint they do not mirror — the
+  // submit button used to do nothing and say nothing. This is what speaks instead.
+  const decoded = attempted ? decodeFreeInputDraft(draft) : undefined;
+  const unexplainedIssues =
+    decoded !== undefined &&
+    Either.isLeft(decoded) &&
+    resumeError === undefined &&
+    ageError === undefined &&
+    languageLevelError === undefined
+      ? decoded.left
+      : [];
+
+  function update(patch: Partial<FreeInputDraft>) {
     setDraft((previous) => ({ ...previous, ...patch }));
   }
 
@@ -85,8 +79,8 @@ export function FreeInputForm({
     setAttempted(true);
 
     // The schema decides, not the field-level messages above it: those exist to say *what* to fix.
-    const decoded = decodeRequest(draft);
-    if (Either.isRight(decoded)) onSubmit(decoded.right);
+    const result = decodeFreeInputDraft(draft);
+    if (Either.isRight(result)) onSubmit(result.right);
   }
 
   return (
@@ -110,7 +104,7 @@ export function FreeInputForm({
             description={`残り${remaining}文字（${MIN_RESUME_LENGTH}〜${MAX_RESUME_LENGTH}文字）`}
             placeholder="担当した料理、使ってきた技法、勤務先の業態や年数などを日本語で書いてください。"
             value={draft.resume}
-            error={resumeErrorJa(draft.resume, attempted)}
+            error={resumeError}
             onChange={(event) => update({ resume: event.currentTarget.value })}
           />
 
@@ -124,8 +118,10 @@ export function FreeInputForm({
               label="年齢"
               description="ワーキングホリデーの年齢上限判定に使います。"
               value={draft.age}
-              error={ageErrorJa(draft.age, attempted)}
-              onChange={(age) => update({ age })}
+              error={ageError}
+              // Mantine hands back a string for a half-typed value. Keeping the draft's own type
+              // narrow means the empty case is `""` rather than a widened `number | string`.
+              onChange={(age) => update({ age: typeof age === "number" ? age : "" })}
             />
 
             <Checkbox
@@ -142,10 +138,14 @@ export function FreeInputForm({
             label="英語レベル（自己申告）"
             description="経歴文の記述ではなく、この申告値で判定します。"
             value={draft.languageLevel}
-            error={
-              attempted && draft.languageLevel === "" ? "英語レベルを選択してください" : undefined
+            error={languageLevelError}
+            // Narrowed by lookup rather than by a cast: the group can only emit one of the four
+            // rendered values, and anything else lands back on the empty state.
+            onChange={(value) =>
+              update({
+                languageLevel: LANGUAGE_LEVEL_ORDER.find((level) => level === value) ?? "",
+              })
             }
-            onChange={(languageLevel) => update({ languageLevel })}
           >
             <Stack gap="xs" mt="xs">
               {LANGUAGE_LEVEL_ORDER.map((level) => (
@@ -153,6 +153,16 @@ export function FreeInputForm({
               ))}
             </Stack>
           </Radio.Group>
+
+          {unexplainedIssues.length === 0 ? null : (
+            <Alert color="red" title="入力内容がスキーマ検証を通りませんでした" variant="light">
+              <List size="sm">
+                {unexplainedIssues.map((issue) => (
+                  <List.Item key={issue}>{issue}</List.Item>
+                ))}
+              </List>
+            </Alert>
+          )}
 
           <Button type="submit" disabled={pending || overCap} loading={pending}>
             {pending ? "判定中です" : "この経歴で判定する"}

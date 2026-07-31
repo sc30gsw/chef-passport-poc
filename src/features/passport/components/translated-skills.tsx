@@ -33,8 +33,11 @@ export function TranslatedSkills({ translatedSkills, vocabulary }: TranslatedSki
 
             return (
               <Card key={skill.skillId} withBorder padding="sm" radius="sm">
+                {/* An empty `sourceJa` correctly falls through to the vocabulary label. When both
+                    are empty, say so rather than leaving a blank line above an English phrase —
+                    the same reason the empty-section case above explains itself. */}
                 <Text size="sm" c="dimmed">
-                  {skill.sourceJa || entry?.labelJa}
+                  {skill.sourceJa || entry?.labelJa || "（原文なし）"}
                 </Text>
                 <Text size="sm" fw={600} lang="en">
                   {skill.localEn}

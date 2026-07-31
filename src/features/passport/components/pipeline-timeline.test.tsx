@@ -20,12 +20,32 @@ describe("PipelineTimeline", () => {
     expect(screen.getByText(/4\. 海外求人とマッチング/)).toBeInTheDocument();
   });
 
-  it("完了ぶんに完了印、次の1件に処理中、残りは待機中", () => {
+  it("各ステップの状態は読み上げ可能なテキストで持つ", () => {
     renderWithMantine(<PipelineTimeline completedCount={2} timings={TIMINGS} />);
 
-    expect(screen.getAllByLabelText("完了").length).toBe(2);
-    expect(screen.getAllByLabelText("処理中").length).toBe(1);
-    expect(screen.getAllByLabelText("待機中").length).toBe(1);
+    // アイコンと色だけだと支援技術には何も伝わらない。状態は li の名前に載せる。
+    expect(screen.getAllByRole("listitem", { name: /: 完了$/ }).length).toBe(2);
+    expect(screen.getAllByRole("listitem", { name: /: 処理中$/ }).length).toBe(1);
+    expect(screen.getAllByRole("listitem", { name: /: 待機中$/ }).length).toBe(1);
+    expect(
+      screen.getByRole("listitem", {
+        name: "3. スキル表現を現地の厨房用語に変換しています: 処理中",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("進行状況を polite なライブリージョンで告知する", () => {
+    renderWithMantine(<PipelineTimeline completedCount={1} timings={TIMINGS} />);
+
+    // 一覧が黙って書き換わるのではなく、いま何をしているかが読み上げられる。
+    expect(screen.getByRole("status")).toHaveTextContent("4ステップ中1ステップ完了");
+    expect(screen.getByRole("status")).toHaveTextContent("国別のビザ要件");
+  });
+
+  it("全ステップ完了もライブリージョンで告知する", () => {
+    renderWithMantine(<PipelineTimeline completedCount={4} timings={TIMINGS} />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("AI処理が完了しました");
   });
 
   it("完了したステップには実測値を出す", () => {

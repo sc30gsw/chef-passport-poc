@@ -5,6 +5,21 @@ import type { PassportView } from "~/features/passport/api/passport-server";
 
 const TOP_MATCH_COUNT = 5;
 
+/** Thresholds, named. They are a presentation choice, not a judgement — the score is the judgement. */
+const STRONG_MATCH_SCORE = 70;
+const FAIR_MATCH_SCORE = 50;
+
+/**
+ * Mapping a judgement to a colour the way `country-grade-card.tsx` does, rather than as a nested
+ * ternary inside a JSX prop. Two idioms for the same job in adjacent files was audit #15's
+ * finding 15; a lookup table is not available here because the input is a range, not a union.
+ */
+function matchScoreColor(score: number) {
+  if (score >= STRONG_MATCH_SCORE) return "green";
+
+  return score >= FAIR_MATCH_SCORE ? "blue" : "gray";
+}
+
 type JobMatchListProps = {
   excludedJobs: PassportView["excludedJobs"];
   jobMatches: PassportView["jobMatches"];
@@ -33,9 +48,7 @@ export function JobMatchList({ excludedJobs, jobMatches }: JobMatchListProps) {
               <Text fw={600} size="sm">
                 {job.titleJa}
               </Text>
-              <Badge color={match.score >= 70 ? "green" : match.score >= 50 ? "blue" : "gray"}>
-                {match.score} / 100
-              </Badge>
+              <Badge color={matchScoreColor(match.score)}>{match.score} / 100</Badge>
             </Group>
 
             <Text c="dimmed" size="xs" mt={2}>
@@ -50,6 +63,10 @@ export function JobMatchList({ excludedJobs, jobMatches }: JobMatchListProps) {
 
             {match.notesJa.length > 0 ? (
               <List size="xs" mt={4} c="dimmed">
+                {/* The sentence is the key. Safe because every `notesJa` push in
+                    `src/domain/scoring.ts` sits in a distinct branch writing a distinct sentence,
+                    so one list cannot hold duplicates. Restated here because the guarantee lives
+                    in another module; an index key is the alternative react-doctor rejects. */}
                 {match.notesJa.map((note) => (
                   <List.Item key={note}>{note}</List.Item>
                 ))}

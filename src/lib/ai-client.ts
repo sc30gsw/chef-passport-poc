@@ -32,8 +32,11 @@ export function anthropicLayer() {
 /**
  * Gateway-level model fallback rides on a top-level `providerOptions.gateway` body field that is
  * absent from the Anthropic SDK schema — Vercel's own docs reach for `@ts-expect-error` here.
- * This is the **only** place that cast is allowed to live; keeping it in one function is what
- * stops an untyped escape hatch from spreading through the pipeline.
+ * This is the only place in the **shipped bundle** that cast is allowed to live; keeping it in one
+ * function is what stops an untyped escape hatch from spreading through the pipeline. The wording
+ * is deliberate: `src/testing/stub-language-model.ts` holds a second `as unknown as`, confined to
+ * test infrastructure, and a claim of "the only one anywhere" would be false — a false absolute is
+ * what makes the next cast easy to justify. See audit #15 finding 11.
  *
  * `AnthropicLanguageModel` spreads its `config` straight into the request body, so the returned
  * object arrives at the gateway as a top-level field rather than nested under a model parameter.
