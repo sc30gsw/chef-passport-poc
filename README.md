@@ -42,6 +42,14 @@
 
 3人のプリセットシェフはコミット済みキャッシュから再生するため、AI Gatewayを呼ばずに試せます。自由入力とライブ生成は、本番環境のAI Gateway設定と利用上限の範囲で動作します。
 
+### プリセットシェフ
+
+https://github.com/user-attachments/assets/31fd67be-6462-4da0-97bc-7b39c64eac14
+
+### 自由入力
+
+https://github.com/user-attachments/assets/eb988887-41da-4d0a-a697-7619700b6000
+
 ## 背景
 
 日本の厨房で培われた経験は、履歴書の文章だけでは海外の採用・ビザ要件と結びつけにくいことがあります。
