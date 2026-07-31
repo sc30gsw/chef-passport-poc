@@ -13,7 +13,7 @@ import { GENRE_LABELS_JA } from "~/features/passport/utils/labels";
  *
  * The heading starts at `h2`: each route owns its own `h1` and this component renders under both
  * of them, so an `h1` here meant a second one on `/free` and none at all on
- * `/passport/$personaId` while the timeline was still running. See audit #17 findings 10 and 11.
+ * `/passports/$personaId` while the timeline was still running. See audit #17 findings 10 and 11.
  *
  * Focus moves to the header on mount. This component always *replaces* `PipelineTimeline`, and
  * that swap used to drop focus to `<body>` with no announcement — a keyboard user restarted tab
