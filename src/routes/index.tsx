@@ -9,12 +9,13 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, stripSearchParams } from "@tanstack/react-router";
+import { valibotValidator } from "@tanstack/valibot-adapter";
 import { Effect } from "effect";
 
 import { loadPersonas } from "~/data/loaders";
 import { PersonaCard } from "~/features/passport/components/persona-card";
-import { decodeLiveSearch } from "~/features/passport/types/live-search";
+import { defaultLiveSearchParams, liveSearchSchema } from "~/features/passport/types/live-search";
 
 /**
  * Screen 1. The personas come from bundled JSON, so this loader is safe on both sides of the
@@ -25,7 +26,10 @@ import { decodeLiveSearch } from "~/features/passport/types/live-search";
  */
 export const Route = createFileRoute("/")({
   // Property order is load-bearing: TanStack Router feeds each one into the next's inference.
-  validateSearch: (search: Record<string, unknown>) => decodeLiveSearch(search),
+  validateSearch: valibotValidator(liveSearchSchema),
+  search: {
+    middlewares: [stripSearchParams(defaultLiveSearchParams)],
+  },
   loader: () => ({ personas: Effect.runSync(loadPersonas) }),
   component: Home,
 });
@@ -56,10 +60,10 @@ function Home() {
             money the moment it loads is the wrong default. */}
         <Paper withBorder p="md" radius="md">
           <Switch
-            checked={live === true}
+            checked={live}
             onChange={(event) =>
-              // `undefined` rather than `false` so an off toggle leaves the URL clean.
-              navigate({ search: { live: event.currentTarget.checked || undefined } })
+              // `false` is the default — `stripSearchParams` drops it so the URL stays clean.
+              navigate({ search: { live: event.currentTarget.checked } })
             }
             label="ライブ生成（AIを実際に呼ぶ）"
             description="オフのときは事前生成キャッシュを再生します。APIキーが無いサーバーでは自動的にキャッシュ再生に切り替わり、画面にその旨を表示します。"
@@ -72,7 +76,7 @@ function Home() {
           </Title>
           <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
             {personas.map((persona) => (
-              <PersonaCard key={persona.id} live={live === true} persona={persona} />
+              <PersonaCard key={persona.id} live={live} persona={persona} />
             ))}
           </SimpleGrid>
         </section>

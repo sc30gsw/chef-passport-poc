@@ -38,6 +38,9 @@ importers:
       '@tanstack/react-start':
         specifier: ^1.168.26
         version: 1.168.26(@voidzero-dev/vite-plus-core@0.2.1(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0))(crossws@0.4.10(srvx@0.11.17))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@tanstack/valibot-adapter':
+        specifier: ^1.167.0
+        version: 1.167.0(@tanstack/react-router@1.170.16(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(valibot@1.4.2(typescript@6.0.3))
       effect:
         specifier: 3.22.0
         version: 3.22.0
@@ -53,6 +56,9 @@ importers:
       tailwind-preset-mantine:
         specifier: 4.1.0
         version: 4.1.0(@mantine/core@9.5.0(@mantine/hooks@9.5.0(react@19.2.7))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(tailwindcss@4.3.1)
+      valibot:
+        specifier: ^1.4.2
+        version: 1.4.2(typescript@6.0.3)
     devDependencies:
       '@rolldown/plugin-babel':
         specifier: ^0.2.3
@@ -1960,6 +1966,13 @@ packages:
   '@tanstack/store@0.9.3':
     resolution: {integrity: sha512-8reSzl/qGWGGVKhBoxXPMWzATSbZLZFWhwBAFO9NAyp0TxzfBP0mIrGb8CP8KrQTmvzXlR/vFPPUrHTLBGyFyw==}
 
+  '@tanstack/valibot-adapter@1.167.0':
+    resolution: {integrity: sha512-W/sN+BnRrMeW3QEtSBf6hUhNFaa/QMs4XnPgSnme5RFt+hDRTQYs/K9aW+TOy92u8VsnQ82uJ2HX/vmntTeqIQ==}
+    engines: {node: '>=20.19'}
+    peerDependencies:
+      '@tanstack/react-router': '>=1.43.2'
+      valibot: ^1.0.0 || ^1.0.0-beta.5 || ^1.0.0-rc
+
   '@tanstack/virtual-file-routes@1.162.0':
     resolution: {integrity: sha512-uhOeFyxLcU41HzvrxsGpiWdcMbScY1EDgbZ5K7DVRMYInbLYWAC0EA/kx9wXAoSM8q82bUG2hRl8+EAjE6XAbA==}
     engines: {node: '>=20.19'}
@@ -3502,6 +3515,14 @@ packages:
     resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
     hasBin: true
 
+  valibot@1.4.2:
+    resolution: {integrity: sha512-gjdCvJ6d3RyHAneqxMYMW9QMCwYMb3jpOO0IyHZV1bnRHFBHrX3VkIILt5XYR0WhwHiH7Mty8ovuPZ/O3gamrg==}
+    peerDependencies:
+      typescript: '>=5'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   vite-plus@0.2.1:
     resolution: {integrity: sha512-q5q/Y38UkWFsNg1JO+RyRdPUqoewaSqIlMyK2p83GKNUvf4D38Ntb3PToRTDZbTRh7mWt+B+d0DQBv4nCDpMcQ==}
     engines: {node: ^20.19.0 || ^22.18.0 || >=24.11.0}
@@ -5033,6 +5054,11 @@ snapshots:
 
   '@tanstack/store@0.9.3': {}
 
+  '@tanstack/valibot-adapter@1.167.0(@tanstack/react-router@1.170.16(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(valibot@1.4.2(typescript@6.0.3))':
+    dependencies:
+      '@tanstack/react-router': 1.170.16(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      valibot: 1.4.2(typescript@6.0.3)
+
   '@tanstack/virtual-file-routes@1.162.0': {}
 
   '@testing-library/dom@10.4.1':
@@ -6505,6 +6531,10 @@ snapshots:
       react: 19.2.7
 
   uuid@11.1.1: {}
+
+  valibot@1.4.2(typescript@6.0.3):
+    optionalDependencies:
+      typescript: 6.0.3
 
   vite-plus@0.2.1(@opentelemetry/api@1.9.1)(@types/node@26.1.2)(@vitest/coverage-v8@4.1.9)(@voidzero-dev/vite-plus-core@0.2.1(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0))(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0):
     dependencies:

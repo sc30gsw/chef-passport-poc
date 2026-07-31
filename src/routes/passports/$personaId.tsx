@@ -1,12 +1,13 @@
 import { Alert, Anchor, Container, Stack, Title } from "@mantine/core";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, stripSearchParams } from "@tanstack/react-router";
+import { valibotValidator } from "@tanstack/valibot-adapter";
 import { Effect } from "effect";
 
 import { loadJobs, loadVisaRequirements } from "~/data/loaders";
 import { loadPassportServer } from "~/features/passport/api/passport-server";
 import { CachedPassport } from "~/features/passport/components/cached-passport";
 import { LivePassport } from "~/features/passport/components/live-passport";
-import { decodeLiveSearch } from "~/features/passport/types/live-search";
+import { defaultLiveSearchParams, liveSearchSchema } from "~/features/passport/types/live-search";
 
 /**
  * Screens 2 and 3 share one route. The transition reads better as a collapse than as a navigation,
@@ -16,9 +17,12 @@ import { decodeLiveSearch } from "~/features/passport/types/live-search";
  * request itself never lands, and the cached run is in-memory and unpaced — cheap enough that
  * holding it ready costs less than a screen with nothing to show.
  */
-export const Route = createFileRoute("/passport/$personaId")({
+export const Route = createFileRoute("/passports/$personaId")({
   // Property order is load-bearing: TanStack Router feeds each one into the next's inference.
-  validateSearch: (search: Record<string, unknown>) => decodeLiveSearch(search),
+  validateSearch: valibotValidator(liveSearchSchema),
+  search: {
+    middlewares: [stripSearchParams(defaultLiveSearchParams)],
+  },
   loader: async ({ params }) => ({
     // Bundled JSON, so this resolves on both sides of the hydration boundary. Loading it here
     // rather than inside `LivePassport` keeps the decode out of a render body.
@@ -61,7 +65,7 @@ function PassportPage() {
           {loaded.data.persona.name} の海外就労適合判定
         </Title>
 
-        {live === true ? (
+        {live ? (
           <LivePassport fallbackView={loaded.data} jobs={jobs} visas={visas} />
         ) : (
           <CachedPassport view={loaded.data} />
