@@ -13,6 +13,7 @@ import {
 } from "~/features/passport/api/pipeline-service";
 import type { PipelineEvent } from "~/features/passport/types/pipeline-event";
 import { EXTRACTION_MODEL, PROSE_MODEL } from "~/lib/model-roles";
+import { itEffect } from "~/testing/effect";
 import {
   STUB_RESPONSES,
   failingModelLayer,
@@ -55,21 +56,34 @@ async function elapsedMs(work: () => Promise<unknown>): Promise<number> {
 }
 
 describe("PipelineFromCache", () => {
-  it("4ステップぶんの開始・完了イベントを順に流し、最後に結果を返す", async () => {
-    const events = await collect(pipelineFromCache(lookupCachedPassport, { paced: false }));
+  /**
+   * The one test written in `itEffect` form. `.claude/rules/common/testing.md` prescribes that
+   * helper for Effect service tests, and asserting *inside* the Effect — rather than unwrapping
+   * with `Effect.runPromise` first — is the shape it is for. The rest of this file keeps the
+   * unwrapped form because those cases assert on an `Exit` or on elapsed wall time. See #13/#20.
+   */
+  itEffect(
+    "4ステップぶんの開始・完了イベントを順に流し、最後に結果を返す",
+    Effect.gen(function* () {
+      const pipeline = yield* PassportPipeline;
+      const events = yield* Stream.runCollect(pipeline.run(inputs));
 
-    expect(events.map((event) => event._tag)).toStrictEqual([
-      "StepStarted",
-      "StepCompleted",
-      "StepStarted",
-      "StepCompleted",
-      "StepStarted",
-      "StepCompleted",
-      "StepStarted",
-      "StepCompleted",
-      "Completed",
-    ]);
-  });
+      expect([...events].map((event) => event._tag)).toStrictEqual([
+        "StepStarted",
+        "StepCompleted",
+        "StepStarted",
+        "StepCompleted",
+        "StepStarted",
+        "StepCompleted",
+        "StepStarted",
+        "StepCompleted",
+        "Completed",
+      ]);
+    }).pipe(
+      Effect.provide(pipelineFromCache(lookupCachedPassport, { paced: false })),
+      Effect.scoped,
+    ),
+  );
 
   it("StepCompleted には丸める前の実測値がそのまま載る", async () => {
     const events = await collect(pipelineFromCache(lookupCachedPassport, { paced: false }));

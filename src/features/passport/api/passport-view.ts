@@ -50,10 +50,3 @@ export async function loadPassportView(personaId: string, pipeline: Layer.Layer<
 
   return { data: joinPassportView(exit.value), ok: true as const };
 }
-
-/**
- * Re-exported so components keep one import path for the payload. The join itself lives in
- * `~/features/passport/utils/join-passport-view`, because the live path joins the streamed result
- * in the browser and must not reach into this module's Effect and data-loading imports.
- */
-export type { PassportView } from "~/features/passport/utils/join-passport-view";

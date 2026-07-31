@@ -8,7 +8,7 @@ import type {
   VisaAssessment,
   VisaRequirement,
 } from "~/data/schemas";
-import { LANGUAGE_LABELS_JA, languageRank } from "~/domain/language-level";
+import { languageRank } from "~/domain/language-level";
 import {
   EXPERIENCE_BENCHMARK_YEARS,
   GENRE_DEMAND,
@@ -202,9 +202,4 @@ export function assessAllCountries(
   jobs: readonly Job[],
 ): readonly CountryAssessment[] {
   return DEMO_COUNTRIES.map((country) => assessCountry(persona, country, visas, jobs));
-}
-
-/** Exported so the UI can label a language gap with the same wording the score used. */
-export function languageGapLabelJa(level: Persona["languageLevel"]): string {
-  return LANGUAGE_LABELS_JA[level];
 }
