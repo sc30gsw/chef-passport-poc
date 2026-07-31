@@ -62,7 +62,7 @@ const resume = (rawData as { resume: string }).resume;
 
 ## Public-demo abuse guard
 
-Free-input mode calls a paid API from a public URL. All three guards are required.
+Free-input mode calls a paid API from a public URL. All four guards are required.
 
 **Owner-approved 2026-07-30:** the earlier feature-flag guard is replaced by key-presence
 gating. `ENABLE_FREE_INPUT` is abolished — there is no separate flag to leave off by
@@ -73,7 +73,20 @@ mistake, and no separate `.env.example` entry for it.
    response instead of calling the gateway. Preset personas work with no key set.
 2. **Input length cap** — enforced in the schema, not only in the UI.
 3. **Spend ceiling** — a per-API-key budget set in the AI Gateway dashboard. Owner
-   confirmed this is set, 2026-07-30.
+   confirmed this is set, 2026-07-30. **This is load-bearing, not belt-and-braces**: it is
+   the only bound that spans instances, so re-confirm it before every public deploy and
+   after every key rotation.
+4. **Per-process live-run budget** — `src/features/passport/api/live-run-budget.ts`, a
+   token bucket both live paths draw from (added by #22 for audit #16 finding 1). The
+   single-flight guard bounds concurrency; this bounds volume, because one live run is
+   ~17 gateway calls and nothing stopped a caller repeating it serially. Refusals cost no
+   token. Preset runs degrade to cache with `reason: "rate-limited"`; free input refuses.
+
+Guards 1 and 4 are **per instance** — module state, so N serverless instances multiply
+both bounds by N. Say so plainly rather than describing either as a rate limit. There is
+no auth, no per-IP throttle and no `Origin` check on the server functions: a public demo
+with no user state has nothing to forge, and the accepted risk is that a third-party page
+can make a visitor trigger paid generation. Guard 3 is what actually caps that.
 
 ```typescript
 const MAX_RESUME_LENGTH = 2000;

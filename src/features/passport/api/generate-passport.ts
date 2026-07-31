@@ -3,6 +3,8 @@ import { Cause, Effect, Exit, Option, Stream } from "effect";
 
 import { loadJobs, loadPersona, loadSkillVocabulary, loadVisaRequirements } from "~/data/loaders";
 import type { PassportInputs } from "~/features/passport/api/build-passport";
+import type { RunBudget } from "~/features/passport/api/live-run-budget";
+import { liveRunBudget } from "~/features/passport/api/live-run-budget";
 import { PassportPipeline } from "~/features/passport/api/pipeline-service";
 import { presetSingleFlight } from "~/features/passport/api/single-flight";
 import type { PassportStreamRequest } from "~/features/passport/types/passport-stream-request";
@@ -42,6 +44,8 @@ const DEGRADATION_JA = {
   "in-flight": "このシェフのライブ生成がすでに実行中のため、事前生成キャッシュを再生しました。",
   "live-failed": "ライブ生成に失敗したため、事前生成キャッシュを最初から再生しました。",
   "no-key": "サーバーにAPIキーが設定されていないため、事前生成キャッシュを再生しました。",
+  "rate-limited":
+    "このサーバーのライブ生成回数が上限に達したため、事前生成キャッシュを再生しました。しばらく待つと再びライブ生成できます。",
 } as const satisfies Record<PresetDegradationReason, string>;
 
 function degradation(reason: PresetDegradationReason): PipelineDegradation {
@@ -98,7 +102,7 @@ async function* replayFromCache(
  * There is no feature flag: key presence is the gate (owner decision, 2026-07-30). See
  * .claude/rules/common/security.md.
  */
-function resolveSource(request: PassportStreamRequest) {
+function resolveSource(request: PassportStreamRequest, budget: RunBudget) {
   if (!request.live) return { degraded: undefined, live: false };
 
   if (!hasGatewayKey()) {
@@ -108,6 +112,13 @@ function resolveSource(request: PassportStreamRequest) {
   // Acquires a slot as a side effect. Released in `streamPassportEvents`' `finally`.
   if (!presetSingleFlight.acquire(request.personaId)) {
     return { degraded: degradation("in-flight"), live: false };
+  }
+
+  // Last, and only once the run is otherwise going ahead: a refusal must not spend a token, and a
+  // spent token must not leave the slot behind. The slot is what makes the order matter.
+  if (!budget.tryConsume()) {
+    presetSingleFlight.release(request.personaId);
+    return { degraded: degradation("rate-limited"), live: false };
   }
 
   return { degraded: undefined, live: true };
@@ -132,6 +143,7 @@ function loadFailureJa(personaId: string, cause: Cause.Cause<{ readonly message:
 export async function* streamPassportEvents(
   request: PassportStreamRequest,
   layers: PassportPipelineLayers,
+  budget: RunBudget = liveRunBudget,
 ): AsyncGenerator<EncodedPipelineEvent> {
   const loaded = await Effect.runPromiseExit(loadInputs(request.personaId));
 
@@ -145,7 +157,7 @@ export async function* streamPassportEvents(
   }
 
   const inputs = loaded.value;
-  const { degraded, live } = resolveSource(request);
+  const { degraded, live } = resolveSource(request, budget);
 
   if (!live) {
     yield* replayFromCache(layers, inputs, degraded);

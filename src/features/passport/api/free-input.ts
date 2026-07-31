@@ -3,6 +3,8 @@ import { Cause, Effect, Exit, Option, Stream } from "effect";
 
 import { loadJobs, loadSkillVocabulary, loadVisaRequirements } from "~/data/loaders";
 import type { FreeInputInputs } from "~/features/passport/api/build-passport";
+import type { RunBudget } from "~/features/passport/api/live-run-budget";
+import { liveRunBudget } from "~/features/passport/api/live-run-budget";
 import { PassportPipeline } from "~/features/passport/api/pipeline-service";
 import { createSingleFlight } from "~/features/passport/api/single-flight";
 import type { FreeInputRequest } from "~/features/passport/types/free-input-request";
@@ -41,6 +43,9 @@ const NO_KEY_JA =
 
 const IN_FLIGHT_JA =
   "別の自由入力がすでに実行中です。完了してから再度お試しください（同時実行は1件までです）。";
+
+const RATE_LIMITED_JA =
+  "このサーバーのライブ生成回数が上限に達しました。しばらく待ってから再度お試しください。プリセットのシェフはキャッシュ再生でいつでも動作します。";
 
 const LOAD_FAILED_JA = "求人・ビザ・語彙データを読み込めませんでした";
 
@@ -87,11 +92,14 @@ function loadFailureJa(cause: Cause.Cause<{ readonly message: string }>) {
  *
  * Guard order is load-bearing. The key check comes first and `layers.live()` is not even built
  * before it passes, so a keyless deployment cannot reach the gateway however the request is shaped.
- * The single-flight slot is taken second, and released in `finally` whatever happens.
+ * The single-flight slot is taken second, and released in `finally` whatever happens. The run
+ * budget is spent last, inside the `try`, so a refusal costs no token and a token never strands the
+ * slot — it bounds how many runs this process starts at all, which single-flight does not.
  */
 export async function* streamFreeInputEvents(
   request: FreeInputRequest,
   layers: FreeInputLayers,
+  budget: RunBudget = liveRunBudget,
 ): AsyncGenerator<EncodedPipelineEvent> {
   if (!hasGatewayKey()) {
     yield encodePipelineEvent(refusal(NO_KEY_JA));
@@ -104,6 +112,11 @@ export async function* streamFreeInputEvents(
   }
 
   try {
+    if (!budget.tryConsume()) {
+      yield encodePipelineEvent(refusal(RATE_LIMITED_JA));
+      return;
+    }
+
     const loaded = await Effect.runPromiseExit(loadStaticData);
 
     if (Exit.isFailure(loaded)) {

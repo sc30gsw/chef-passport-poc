@@ -15,14 +15,14 @@ import { PassportResult, PipelineStep } from "~/data/schemas";
  *
  * Absent means the run did what the caller asked, which is the only silent case.
  *
- * The first three belong to preset generation, where a downgrade means the committed cache stood in
+ * All but one belong to preset generation, where a downgrade means the committed cache stood in
  * for a live run. `prose-failed` is free input's: there is no cache for a stranger's résumé, so the
  * only thing a failed wording step can fall back to is `deterministicProse`, and this is what says
  * so out loud.
  */
 const PipelineDegradation = Schema.Struct({
   messageJa: Schema.String,
-  reason: Schema.Literal("live-failed", "no-key", "in-flight", "prose-failed"),
+  reason: Schema.Literal("live-failed", "no-key", "in-flight", "rate-limited", "prose-failed"),
 });
 export type PipelineDegradation = Schema.Schema.Type<typeof PipelineDegradation>;
 

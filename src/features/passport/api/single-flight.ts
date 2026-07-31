@@ -10,22 +10,51 @@
  * A mutable registry is the point rather than a lapse: this is process state being observed, not a
  * value being transformed, so the repo's "return new values" rule has nothing to act on here.
  */
-export function createSingleFlight(maxConcurrent: number) {
-  const active = new Set<string>();
+/**
+ * A slot cannot outlive the run it belongs to. `release` sits in the `finally` of an async
+ * generator, and a client that disconnects mid-stream may leave the runtime never calling
+ * `.return()` on it — the `finally` never runs and the slot is held for the life of the process.
+ * For free input that is the *global* slot: one abandoned request would disable the feature until
+ * the instance recycles. The expiry equals the pipeline's own 120-second total budget (closed
+ * decision #6), so no live run can still be going when its slot expires. See audit #16 finding 4.
+ */
+const SLOT_TTL_MS = 120_000;
+
+export type SingleFlightOptions = {
+  /** Injectable clock. Tests drive time rather than waiting for it. */
+  readonly now?: () => number;
+  readonly ttlMs?: number;
+};
+
+export function createSingleFlight(maxConcurrent: number, options: SingleFlightOptions = {}) {
+  const now = options.now ?? Date.now;
+  const ttlMs = options.ttlMs ?? SLOT_TTL_MS;
+  const acquiredAt = new Map<string, number>();
+
+  function dropExpired() {
+    const at = now();
+
+    for (const [key, since] of acquiredAt) {
+      if (at - since >= ttlMs) acquiredAt.delete(key);
+    }
+  }
 
   return {
     /** `false` means a run is already in flight — the caller degrades instead of waiting. */
     acquire(key: string): boolean {
-      if (active.has(key) || active.size >= maxConcurrent) return false;
+      dropExpired();
 
-      active.add(key);
+      if (acquiredAt.has(key) || acquiredAt.size >= maxConcurrent) return false;
+
+      acquiredAt.set(key, now());
       return true;
     },
     activeCount(): number {
-      return active.size;
+      dropExpired();
+      return acquiredAt.size;
     },
     release(key: string): void {
-      active.delete(key);
+      acquiredAt.delete(key);
     },
   };
 }

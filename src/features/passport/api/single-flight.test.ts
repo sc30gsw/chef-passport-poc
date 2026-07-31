@@ -40,6 +40,31 @@ describe("createSingleFlight", () => {
     expect(guard.activeCount()).toBe(1);
   });
 
+  it("放棄されたスロットは期限切れで再利用できる", () => {
+    // 切断されたストリームでは async generator の finally が走らないことがあり、release が呼ばれ
+    // ないままスロットが残る。期限がなければ、そのプロセスでは以後ずっとライブ生成が塞がれる。
+    let nowMs = 0;
+    const guard = createSingleFlight(1, { now: () => nowMs, ttlMs: 1_000 });
+
+    expect(guard.acquire("a")).toBe(true);
+    expect(guard.acquire("a")).toBe(false);
+
+    nowMs = 1_000;
+
+    expect(guard.acquire("a")).toBe(true);
+  });
+
+  it("期限内のスロットは占有したままにする", () => {
+    let nowMs = 0;
+    const guard = createSingleFlight(1, { now: () => nowMs, ttlMs: 1_000 });
+
+    guard.acquire("a");
+    nowMs = 999;
+
+    expect(guard.acquire("a")).toBe(false);
+    expect(guard.activeCount()).toBe(1);
+  });
+
   it("自由入力の「全体で1本」もこの factory で表せる", () => {
     // #9 が使う形。キーを固定した1スロットが、そのままグローバル単一実行になる。
     const guard = createSingleFlight(1);

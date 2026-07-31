@@ -5,6 +5,7 @@ import { FREE_INPUT_PERSONA_ID } from "~/features/passport/api/build-passport";
 import type { FreeInputLayers } from "~/features/passport/api/free-input";
 import { freeInputSingleFlight, streamFreeInputEvents } from "~/features/passport/api/free-input";
 import { generateFreePassportServer } from "~/features/passport/api/free-input-server";
+import { createRunBudget } from "~/features/passport/api/live-run-budget";
 import { PipelineLive } from "~/features/passport/api/pipeline-service";
 import { FreeInputRequest, MAX_RESUME_LENGTH } from "~/features/passport/types/free-input-request";
 import { PipelineEvent } from "~/features/passport/types/pipeline-event";
@@ -44,10 +45,26 @@ function liveLayer(model: StubModelLayer): FreeInputLayers["live"] {
   return () => PipelineLive.pipe(Layer.provide(model));
 }
 
-async function collect(request: typeof BASE_REQUEST | FreeInputRequest, model: StubModelLayer) {
+/** Deliberately not the production numbers: the wiring is the subject, not the sizing. */
+const TEST_BURST = 4;
+const REFILL_MS = 60_000;
+
+/**
+ * A fresh budget per run. The module-level one is process state shared by every live path, so a
+ * test file that drew from it would bound its own later cases by accident.
+ */
+function freshBudget() {
+  return createRunBudget({ burst: TEST_BURST, refillIntervalMs: REFILL_MS });
+}
+
+async function collect(
+  request: typeof BASE_REQUEST | FreeInputRequest,
+  model: StubModelLayer,
+  budget = freshBudget(),
+) {
   const received: PipelineEvent[] = [];
 
-  for await (const event of streamFreeInputEvents(request, { live: liveLayer(model) })) {
+  for await (const event of streamFreeInputEvents(request, { live: liveLayer(model) }, budget)) {
     received.push(decodeEvent(event));
   }
 
@@ -140,6 +157,39 @@ describe("streamFreeInputEvents — ガード", () => {
     await collect(BASE_REQUEST, stubModelLayer(STUB_RESPONSES));
 
     expect(freeInputSingleFlight.acquire("free-input")).toBe(true);
+  });
+
+  it("プロセスのライブ生成予算が尽きたら、モデルに触れずに拒否する", async () => {
+    vi.stubEnv("AI_GATEWAY_API_KEY", "test-key");
+    const model = countingModelLayer();
+    const spent = createRunBudget({ burst: 1, refillIntervalMs: REFILL_MS });
+    spent.tryConsume();
+
+    const events = await collect(BASE_REQUEST, model.layer, spent);
+
+    // プリセットと違いキャッシュに退避できないので、下がるのではなく断る。
+    expect(model.calls.count).toBe(0);
+    expect(events.map((event) => event._tag)).toStrictEqual(["Failed"]);
+    expect(events[0]?._tag === "Failed" ? events[0].step : "").toBe("guard");
+    expect(events[0]?._tag === "Failed" ? events[0].messageJa : "").toContain("上限");
+  });
+
+  it("予算で断られてもスロットは残さない", async () => {
+    vi.stubEnv("AI_GATEWAY_API_KEY", "test-key");
+    const spent = createRunBudget({ burst: 0, refillIntervalMs: REFILL_MS });
+
+    await collect(BASE_REQUEST, countingModelLayer().layer, spent);
+
+    expect(freeInputSingleFlight.acquire("free-input")).toBe(true);
+  });
+
+  it("鍵がない拒否では予算を消費しない", async () => {
+    vi.stubEnv("AI_GATEWAY_API_KEY", "");
+    const budget = freshBudget();
+
+    await collect(BASE_REQUEST, countingModelLayer().layer, budget);
+
+    expect(budget.remaining()).toBe(TEST_BURST);
   });
 });
 
