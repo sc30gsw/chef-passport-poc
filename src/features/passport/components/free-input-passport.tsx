@@ -1,8 +1,7 @@
 import { Alert, Code, Stack, Text } from "@mantine/core";
-import { Effect } from "effect";
 import { useState } from "react";
 
-import { loadJobs, loadSkillVocabulary, loadVisaRequirements } from "~/data/loaders";
+import type { Job, SkillVocabularyEntry, VisaRequirement } from "~/data/schemas";
 import { personaFromFreeInput } from "~/features/passport/api/build-passport";
 import { generateFreePassportServer } from "~/features/passport/api/free-input-server";
 import { FreeInputForm } from "~/features/passport/components/free-input-form";
@@ -19,6 +18,10 @@ import { joinPassportView } from "~/features/passport/utils/join-passport-view";
 const TRANSPORT_FAILURE_JA =
   "ライブ生成に接続できませんでした。自由入力には事前生成キャッシュという退避先がないため、時間をおいて再度お試しください。";
 
+/** Same distinction the preset screen makes: schema drift is not a connection problem. */
+const DECODE_FAILURE_JA =
+  "サーバーから届いた進行イベントを解釈できませんでした（形式の不一致）。時間をおいて再度お試しください。";
+
 /** Module-level so its identity is stable: the hook keys its effect on `open` and the request. */
 function openFreeInputStream(request: FreeInputRequest) {
   return generateFreePassportServer({ data: request });
@@ -33,10 +36,21 @@ function openFreeInputStream(request: FreeInputRequest) {
  * `available` is the server's answer to "is `AI_GATEWAY_API_KEY` set", never the key itself. With no
  * key the form is not shown at all; a caller who posts anyway still meets the server's typed refusal,
  * which arrives as a `Failed` event and renders through the same alert as any other failure.
+ *
+ * The static data arrives as props: the route loader owns loading it, so this component renders in a
+ * test without the data layer behind it and nothing is decoded again on every streamed event.
  */
-export function FreeInputPassport({ available }: Record<"available", boolean>) {
+type FreeInputPassportProps = {
+  available: boolean;
+  jobs: readonly Job[];
+  visas: readonly VisaRequirement[];
+  vocabulary: readonly SkillVocabularyEntry[];
+};
+
+export function FreeInputPassport({ available, jobs, visas, vocabulary }: FreeInputPassportProps) {
   const [request, setRequest] = useState<FreeInputRequest | undefined>(undefined);
   const { completedCount, degraded, failureJa, isComplete, result, timings } = usePipelineStream({
+    decodeFailureJa: DECODE_FAILURE_JA,
     open: openFreeInputStream,
     request,
     transportFailureJa: TRANSPORT_FAILURE_JA,
@@ -62,11 +76,11 @@ export function FreeInputPassport({ available }: Record<"available", boolean>) {
     request === undefined || result === undefined
       ? undefined
       : joinPassportView({
-          jobs: Effect.runSync(loadJobs),
+          jobs,
           persona: personaFromFreeInput(request, result.skillSet),
           result,
-          visas: Effect.runSync(loadVisaRequirements),
-          vocabulary: Effect.runSync(loadSkillVocabulary),
+          visas,
+          vocabulary,
         });
 
   return (

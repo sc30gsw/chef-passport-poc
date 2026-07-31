@@ -53,7 +53,9 @@ export function PersonaCard({
               {...props}
               to="/passport/$personaId"
               params={{ personaId: persona.id }}
-              search={{ live }}
+              // `undefined` rather than `false`: the cached run is the default, so the URL only
+              // names the mode when it is the one that costs money.
+              search={{ live: live || undefined }}
             />
           )}
         >

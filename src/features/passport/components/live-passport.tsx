@@ -1,7 +1,6 @@
 import { Alert, Stack } from "@mantine/core";
-import { Effect } from "effect";
 
-import { loadJobs, loadVisaRequirements } from "~/data/loaders";
+import type { Job, VisaRequirement } from "~/data/schemas";
 import { generatePassportServer } from "~/features/passport/api/generate-passport-server";
 import { PassportDashboard } from "~/features/passport/components/passport-dashboard";
 import { PipelineTimeline } from "~/features/passport/components/pipeline-timeline";
@@ -12,20 +11,37 @@ import { joinPassportView } from "~/features/passport/utils/join-passport-view";
 /**
  * Live generation, driven by the events the server function streams back. `fallbackView` is the
  * cached run the route loader already produced: the server's own fallback covers a failed model, and
- * this covers the case the server cannot report on — the request never arriving at all.
+ * this covers the cases the server cannot report on — the request never arriving, and a chunk that
+ * arrives but does not decode.
  *
- * Jobs and visas are re-joined here from the same bundled JSON the picker already loads, so the
- * streamed `PassportResult` reaches the dashboard through the same join the loader uses.
+ * `jobs` and `visas` arrive as props rather than being decoded in the render body. The route loader
+ * is the composition layer that owns loading them, which is also what lets this component render in
+ * a test without the data layer behind it.
  */
 const TRANSPORT_FAILURE_JA = "ライブ生成に接続できませんでした。事前生成キャッシュを表示します。";
+
+/**
+ * A chunk that will not decode is a contract bug between the server's encoder and the client's
+ * schema, not a connection problem. Saying "接続できませんでした" for it would point at the network
+ * while the wire is fine.
+ */
+const DECODE_FAILURE_JA =
+  "サーバーから届いた進行イベントを解釈できませんでした（形式の不一致）。事前生成キャッシュを表示します。";
 
 /** Module-level so its identity is stable: the hook keys its effect on `open` and the request. */
 function openPresetStream(personaId: string) {
   return generatePassportServer({ data: { live: true, personaId } });
 }
 
-export function LivePassport({ fallbackView }: Record<"fallbackView", PassportView>) {
+type LivePassportProps = {
+  fallbackView: PassportView;
+  jobs: readonly Job[];
+  visas: readonly VisaRequirement[];
+};
+
+export function LivePassport({ fallbackView, jobs, visas }: LivePassportProps) {
   const { completedCount, degraded, failureJa, isComplete, result, timings } = usePipelineStream({
+    decodeFailureJa: DECODE_FAILURE_JA,
     open: openPresetStream,
     request: fallbackView.persona.id,
     transportFailureJa: TRANSPORT_FAILURE_JA,
@@ -39,10 +55,10 @@ export function LivePassport({ fallbackView }: Record<"fallbackView", PassportVi
     result === undefined
       ? fallbackView
       : joinPassportView({
-          jobs: Effect.runSync(loadJobs),
+          jobs,
           persona: fallbackView.persona,
           result,
-          visas: Effect.runSync(loadVisaRequirements),
+          visas,
           vocabulary: fallbackView.vocabulary,
         });
 

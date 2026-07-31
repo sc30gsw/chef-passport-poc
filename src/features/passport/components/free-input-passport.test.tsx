@@ -1,14 +1,23 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { lookupCachedPassport } from "~/data/cache-index";
+import { loadJobs, loadSkillVocabulary, loadVisaRequirements } from "~/data/loaders";
 import type { PassportResult } from "~/data/schemas";
 import { FreeInputPassport } from "~/features/passport/components/free-input-passport";
 import { MIN_RESUME_LENGTH } from "~/features/passport/types/free-input-request";
 import type { EncodedPipelineEvent, PipelineEvent } from "~/features/passport/types/pipeline-event";
 import { STEP_LABELS_JA, encodePipelineEvent } from "~/features/passport/types/pipeline-event";
 import { renderWithMantine } from "~/testing/render";
+
+/** Supplied by the route loader in the app; a component test provides it the same way. */
+const REFERENCE = {
+  jobs: Effect.runSync(loadJobs),
+  visas: Effect.runSync(loadVisaRequirements),
+  vocabulary: Effect.runSync(loadSkillVocabulary),
+};
 
 /**
  * The server function is the seam. Mocking it keeps the whole server graph — pipeline, gateway
@@ -62,14 +71,14 @@ beforeEach(() => {
 
 describe("FreeInputPassport — 利用可否", () => {
   it("サーバーに鍵が無ければフォームを出さず、理由を明示する", () => {
-    renderWithMantine(<FreeInputPassport available={false} />);
+    renderWithMantine(<FreeInputPassport available={false} {...REFERENCE} />);
 
     expect(screen.getByText(/現在は利用できません/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "この経歴で判定する" })).not.toBeInTheDocument();
   });
 
   it("鍵があればフォームを出す", () => {
-    renderWithMantine(<FreeInputPassport available />);
+    renderWithMantine(<FreeInputPassport available {...REFERENCE} />);
 
     expect(screen.getByRole("button", { name: "この経歴で判定する" })).toBeInTheDocument();
   });
@@ -94,7 +103,7 @@ describe("FreeInputPassport — ライブ生成", () => {
       );
 
     const user = userEvent.setup();
-    renderWithMantine(<FreeInputPassport available />);
+    renderWithMantine(<FreeInputPassport available {...REFERENCE} />);
     await submitResume(user);
 
     // 1件目が届いた時点で画面が進む。全部届いてからではない。
@@ -120,7 +129,7 @@ describe("FreeInputPassport — ライブ生成", () => {
     scriptEvents([{ _tag: "Completed", result: RESULT }]);
 
     const user = userEvent.setup();
-    renderWithMantine(<FreeInputPassport available />);
+    renderWithMantine(<FreeInputPassport available {...REFERENCE} />);
     await submitResume(user);
 
     expect(await screen.findByRole("heading", { name: "シンガポール" })).toBeInTheDocument();
@@ -137,7 +146,7 @@ describe("FreeInputPassport — 失敗の3経路", () => {
     ]);
 
     const user = userEvent.setup();
-    renderWithMantine(<FreeInputPassport available />);
+    renderWithMantine(<FreeInputPassport available {...REFERENCE} />);
     await submitResume(user);
 
     expect(await screen.findByText("スキル抽出の生成に失敗しました")).toBeInTheDocument();
@@ -155,7 +164,7 @@ describe("FreeInputPassport — 失敗の3経路", () => {
     ]);
 
     const user = userEvent.setup();
-    renderWithMantine(<FreeInputPassport available />);
+    renderWithMantine(<FreeInputPassport available {...REFERENCE} />);
     await submitResume(user);
 
     expect(await screen.findByText(/APIキーが設定されていない/)).toBeInTheDocument();
@@ -165,7 +174,7 @@ describe("FreeInputPassport — 失敗の3経路", () => {
     transport.open = () => Promise.reject(new Error("network down"));
 
     const user = userEvent.setup();
-    renderWithMantine(<FreeInputPassport available />);
+    renderWithMantine(<FreeInputPassport available {...REFERENCE} />);
     await submitResume(user);
 
     // プリセットと違い、他人の経歴文にキャッシュ再生の退避先はない。
@@ -188,7 +197,7 @@ describe("FreeInputPassport — 縮退", () => {
     ]);
 
     const user = userEvent.setup();
-    renderWithMantine(<FreeInputPassport available />);
+    renderWithMantine(<FreeInputPassport available {...REFERENCE} />);
     await submitResume(user);
 
     expect(await screen.findByText(/決定論ロジックが組み立てた説明文/)).toBeInTheDocument();

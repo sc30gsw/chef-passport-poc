@@ -8,7 +8,6 @@ import type { PassportInputs } from "~/features/passport/api/build-passport";
 import {
   PassportPipeline,
   PipelineLive,
-  clampReplayMs,
   pipelineFromCache,
   runPassportPipeline,
 } from "~/features/passport/api/pipeline-service";
@@ -54,17 +53,6 @@ async function elapsedMs(work: () => Promise<unknown>): Promise<number> {
   await work();
   return performance.now() - startedAt;
 }
-
-describe("clampReplayMs", () => {
-  it.each([
-    [0, 800],
-    [500, 800],
-    [1500, 1500],
-    [9000, 2500],
-  ])("実測 %i ms は %i ms に丸められる", (measured, expected) => {
-    expect(clampReplayMs(measured)).toBe(expected);
-  });
-});
 
 describe("PipelineFromCache", () => {
   it("4ステップぶんの開始・完了イベントを順に流し、最後に結果を返す", async () => {

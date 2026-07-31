@@ -1,7 +1,9 @@
 import { Anchor, Container, List, Stack, Text, Title } from "@mantine/core";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { Effect } from "effect";
 
+import { loadJobs, loadSkillVocabulary, loadVisaRequirements } from "~/data/loaders";
 import { FreeInputPassport } from "~/features/passport/components/free-input-passport";
 import { MAX_RESUME_LENGTH } from "~/features/passport/types/free-input-request";
 import { hasGatewayKey } from "~/lib/gateway-key";
@@ -18,13 +20,22 @@ const readFreeInputAvailabilityServer = createServerFn({ method: "GET" }).handle
   available: hasGatewayKey(),
 }));
 
+/**
+ * The bundled reference data is joined here rather than inside the component: the loader is the
+ * composition layer, and decoding in a render body re-runs the decode on every streamed event.
+ */
 export const Route = createFileRoute("/free")({
   component: FreePage,
-  loader: () => readFreeInputAvailabilityServer(),
+  loader: async () => ({
+    ...(await readFreeInputAvailabilityServer()),
+    jobs: Effect.runSync(loadJobs),
+    visas: Effect.runSync(loadVisaRequirements),
+    vocabulary: Effect.runSync(loadSkillVocabulary),
+  }),
 });
 
 function FreePage() {
-  const { available } = Route.useLoaderData();
+  const { available, jobs, visas, vocabulary } = Route.useLoaderData();
 
   return (
     <Container size="lg" py="xl">
@@ -37,7 +48,12 @@ function FreePage() {
           自由入力モード
         </Title>
 
-        <FreeInputPassport available={available} />
+        <FreeInputPassport
+          available={available}
+          jobs={jobs}
+          visas={visas}
+          vocabulary={vocabulary}
+        />
 
         <Text fw={600} size="sm">
           自由入力に必要な3つのガード

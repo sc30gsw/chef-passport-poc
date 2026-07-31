@@ -14,6 +14,7 @@ import { extractSkills } from "~/features/passport/api/steps/extract-skills";
 import { translateSkills } from "~/features/passport/api/steps/translate-skills";
 import type { PipelineDegradation, PipelineEvent } from "~/features/passport/types/pipeline-event";
 import { STEP_LABELS_JA } from "~/features/passport/types/pipeline-event";
+import { clampReplayMs } from "~/features/passport/utils/replay-pacing";
 import type { ModelRole } from "~/lib/model-roles";
 import { ExtractionLanguageModel, ProseLanguageModel } from "~/lib/model-roles";
 
@@ -44,14 +45,6 @@ export class PipelineError extends Data.TaggedError("PipelineError")<{
   messageJa: string;
   step: string;
 }> {}
-
-/** Replay bounds, so a slow recorded call cannot stall the demo and a fast one is still visible. */
-const MIN_REPLAY_MS = 800;
-const MAX_REPLAY_MS = 2500;
-
-export function clampReplayMs(durationMs: number): number {
-  return Math.min(MAX_REPLAY_MS, Math.max(MIN_REPLAY_MS, durationMs));
-}
 
 /** The gateway documents model fallback but not retries — those are ours to write. */
 const RESILIENCE = Schedule.exponential("500 millis").pipe(Schedule.intersect(Schedule.recurs(2)));
