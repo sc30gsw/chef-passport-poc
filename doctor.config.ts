@@ -27,14 +27,18 @@ export default defineConfig({
     ],
     overrides: [
       {
-        // tsconfig.json's "libReplacement": true is what activates better-typescript-lib —
-        // a TS compiler flag, not an import, so deslop (react-doctor's dead-code engine) has
-        // nothing to trace. deslop has no per-dependency ignore list (unlike fallow's
-        // ignoreDependencies), so a file-scoped override — narrowed to package.json, the only
-        // file this rule can ever fire against — is the narrowest suppression its schema
-        // supports. See #14.
+        // Two dependencies are real but have no first-party import for deslop (react-doctor's
+        // dead-code engine) to trace:
+        // - better-typescript-lib: activated by tsconfig.json's "libReplacement": true — a TS
+        //   compiler flag, not an import. See #14.
+        // - @mantine/hooks: @mantine/core's documented peer pair, imported internally by
+        //   @mantine/core at runtime; Mantine requires both to be installed together.
+        // deslop has no per-dependency ignore list (unlike fallow's ignoreDependencies), so a
+        // file-scoped override — narrowed to package.json, the only file these rules can ever
+        // fire against — is the narrowest suppression its schema supports. fallow remains the
+        // per-name gate for genuinely unused dependencies (it runs in ci.yml).
         files: ["package.json"],
-        rules: ["deslop/unused-dev-dependency"],
+        rules: ["deslop/unused-dev-dependency", "deslop/unused-dependency"],
       },
     ],
   },
