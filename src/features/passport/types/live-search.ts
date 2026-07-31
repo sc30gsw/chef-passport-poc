@@ -1,4 +1,4 @@
-import { Schema } from "effect";
+import { Either, Schema } from "effect";
 
 /**
  * `?live=true` is where the demo's mode lives — on **both** screens. It was a `useState` on `/` and
@@ -20,4 +20,15 @@ const LiveSearch = Schema.Struct({
   ),
 });
 
-export const decodeLiveSearch = Schema.decodeUnknownSync(LiveSearch);
+const decode = Schema.decodeUnknownEither(LiveSearch);
+
+/**
+ * A hand-mangled URL falls back to the default mode instead of throwing. `decodeUnknownSync` would
+ * surface a raw `ParseError` to TanStack's `errorComponent`, which renders `error.message` — the
+ * English Effect parse dump in place of the whole screen, over a query string nobody typed on
+ * purpose. Cache replay is the safe default and costs nothing, so a bad `?live=` is worth ignoring
+ * rather than escalating. See .claude/rules/typescript/effect-schema.md and audit #17 finding 17.
+ */
+export function decodeLiveSearch(search: Record<string, unknown>) {
+  return Either.getOrElse(decode(search), () => ({}) as Schema.Schema.Type<typeof LiveSearch>);
+}
