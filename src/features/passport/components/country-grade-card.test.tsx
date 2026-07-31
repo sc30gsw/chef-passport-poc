@@ -51,7 +51,7 @@ describe("CountryGradeCard", () => {
       if (assessment === undefined) continue;
 
       const statusJa = assessment.eligible ? "クリア" : "対象外";
-      expect(screen.getByLabelText(`${requirement.name}の判定 ${statusJa}`)).toBeInTheDocument();
+      expect(screen.getByText(`${requirement.name}の判定 ${statusJa}`)).toBeInTheDocument();
     }
   });
 
@@ -65,7 +65,7 @@ describe("CountryGradeCard", () => {
 
     // 「判定して落ちた」と「誰も判定していない」は別物。法的免責の下で確信のある
     // 対象外バッジを出すのは、この画面が主張している監査可能性そのものを損なう。
-    expect(screen.getByLabelText("未判定デモビザの判定 判定なし")).toBeInTheDocument();
-    expect(screen.queryByLabelText("未判定デモビザの判定 対象外")).not.toBeInTheDocument();
+    expect(screen.getByText("未判定デモビザの判定 判定なし")).toBeInTheDocument();
+    expect(screen.queryByText("未判定デモビザの判定 対象外")).not.toBeInTheDocument();
   });
 });

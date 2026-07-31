@@ -19,7 +19,7 @@ export function PersonaCard({
     <Card withBorder padding="lg" radius="md" component="article">
       <Stack gap="xs">
         <Group justify="space-between" align="center">
-          <Title order={2} size="h4">
+          <Title order={3} size="h4">
             {persona.name}
           </Title>
           <Text c="dimmed" size="sm">

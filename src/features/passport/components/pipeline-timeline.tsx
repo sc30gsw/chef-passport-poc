@@ -45,7 +45,10 @@ export function PipelineTimeline({
   timings,
 }: Pick<PipelineRunState, "completedCount" | "timings">) {
   return (
-    <Paper withBorder p="lg" radius="md">
+    // `aria-busy` says the region is still changing, so a screen reader can hold off on reading a
+    // half-built list. It clears on the last step, which is also the moment `PassportDashboard`
+    // replaces this component and takes focus. See audit #17 finding 7.
+    <Paper withBorder p="lg" radius="md" aria-busy={completedCount < STEP_ORDER.length}>
       <Title order={2} size="h4" mb="md">
         AI処理の進行状況
       </Title>

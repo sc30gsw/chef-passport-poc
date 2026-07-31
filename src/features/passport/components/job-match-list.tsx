@@ -37,7 +37,7 @@ export function JobMatchList({ excludedJobs, jobMatches }: JobMatchListProps) {
 
   return (
     <Paper withBorder p="lg" radius="md" component="section">
-      <Title order={2} size="h4" mb="md">
+      <Title order={3} size="h4" mb="md">
         求人マッチ（上位{top.length}件 / 全{jobMatches.length}件）
       </Title>
 

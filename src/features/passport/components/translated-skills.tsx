@@ -17,7 +17,7 @@ type TranslatedSkillsProps = {
 export function TranslatedSkills({ translatedSkills, vocabulary }: TranslatedSkillsProps) {
   return (
     <Paper withBorder p="lg" radius="md" component="section">
-      <Title order={2} size="h4" mb="md">
+      <Title order={3} size="h4" mb="md">
         スキルの現地語翻訳
       </Title>
 

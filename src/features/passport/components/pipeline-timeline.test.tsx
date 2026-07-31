@@ -34,6 +34,19 @@ describe("PipelineTimeline", () => {
     ).toBeInTheDocument();
   });
 
+  it("走っている間は aria-busy、終わったら外れる", () => {
+    // 監査 #17 finding 7。組み立て途中の一覧を読み上げさせないための印。
+    const { container: running } = renderWithMantine(
+      <PipelineTimeline completedCount={2} timings={TIMINGS} />,
+    );
+    expect(running.querySelector("[aria-busy='true']")).not.toBeNull();
+
+    const { container: finished } = renderWithMantine(
+      <PipelineTimeline completedCount={4} timings={TIMINGS} />,
+    );
+    expect(finished.querySelector("[aria-busy='true']")).toBeNull();
+  });
+
   it("進行状況を polite なライブリージョンで告知する", () => {
     renderWithMantine(<PipelineTimeline completedCount={1} timings={TIMINGS} />);
 
