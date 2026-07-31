@@ -2,10 +2,10 @@ import { Alert, Badge, Group, Paper, SimpleGrid, Stack, Text, Title } from "@man
 import { useEffect, useRef } from "react";
 
 import { LANGUAGE_LABELS_JA } from "~/domain/language-level";
-import type { PassportView } from "~/features/passport/api/passport-server";
 import { CountryGradeCard } from "~/features/passport/components/country-grade-card";
 import { JobMatchList } from "~/features/passport/components/job-match-list";
 import { TranslatedSkills } from "~/features/passport/components/translated-skills";
+import type { PassportView } from "~/features/passport/utils/join-passport-view";
 import { GENRE_LABELS_JA } from "~/features/passport/utils/labels";
 
 /**

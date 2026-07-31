@@ -1,7 +1,7 @@
 import { Badge, Button, Card, Group, List, Paper, Stack, Text, Title } from "@mantine/core";
 import { useState } from "react";
 
-import type { PassportView } from "~/features/passport/api/passport-server";
+import type { PassportView } from "~/features/passport/utils/join-passport-view";
 
 const TOP_MATCH_COUNT = 5;
 
@@ -20,18 +20,16 @@ function matchScoreColor(score: number) {
   return score >= FAIR_MATCH_SCORE ? "blue" : "gray";
 }
 
-type JobMatchListProps = {
-  excludedJobs: PassportView["excludedJobs"];
-  jobMatches: PassportView["jobMatches"];
-};
-
 /**
  * Excluded jobs are collapsed behind a count rather than dropped. Plain `useState` instead of
  * Mantine's `Collapse`: `@mantine/hooks` #9078 pins `use-collapse` to first render inside
  * `forwardRef`/`memo`, and a control that will not open during a live demo is the worst available
  * failure mode. See .claude/rules/web/mantine-tailwind.md.
  */
-export function JobMatchList({ excludedJobs, jobMatches }: JobMatchListProps) {
+export function JobMatchList({
+  excludedJobs,
+  jobMatches,
+}: Pick<PassportView, "excludedJobs" | "jobMatches">) {
   const [showExcluded, setShowExcluded] = useState(false);
   const top = jobMatches.slice(0, TOP_MATCH_COUNT);
 

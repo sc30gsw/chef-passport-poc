@@ -1,11 +1,6 @@
 import { Card, Paper, Stack, Text, Title } from "@mantine/core";
 
-import type { PassportView } from "~/features/passport/api/passport-server";
-
-type TranslatedSkillsProps = {
-  translatedSkills: PassportView["translatedSkills"];
-  vocabulary: PassportView["vocabulary"];
-};
+import type { PassportView } from "~/features/passport/utils/join-passport-view";
 
 /**
  * The moment a Japanese craft term becomes a phrase a foreign head chef understands. This is the one
@@ -14,7 +9,10 @@ type TranslatedSkillsProps = {
  * When the cache was generated offline there are no translations, so the section explains itself
  * rather than rendering an empty box.
  */
-export function TranslatedSkills({ translatedSkills, vocabulary }: TranslatedSkillsProps) {
+export function TranslatedSkills({
+  translatedSkills,
+  vocabulary,
+}: Pick<PassportView, "translatedSkills" | "vocabulary">) {
   return (
     <Paper withBorder p="lg" radius="md" component="section">
       <Title order={3} size="h4" mb="md">

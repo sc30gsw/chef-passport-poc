@@ -2,9 +2,9 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it } from "vite-plus/test";
 
-import type { PassportView } from "~/features/passport/api/passport-server";
 import { loadPassportView } from "~/features/passport/api/passport-view";
 import { PassportDashboard } from "~/features/passport/components/passport-dashboard";
+import type { PassportView } from "~/features/passport/utils/join-passport-view";
 import { passportPipelineFromCache } from "~/lib/runtime";
 import { renderWithMantine } from "~/testing/render";
 

@@ -2,9 +2,9 @@ import { screen } from "@testing-library/react";
 import { beforeAll, describe, expect, it } from "vite-plus/test";
 
 import type { VisaRequirement } from "~/data/schemas";
-import type { PassportView } from "~/features/passport/api/passport-server";
 import { loadPassportView } from "~/features/passport/api/passport-view";
 import { CountryGradeCard } from "~/features/passport/components/country-grade-card";
+import type { PassportView } from "~/features/passport/utils/join-passport-view";
 import { passportPipelineFromCache } from "~/lib/runtime";
 import { renderWithMantine } from "~/testing/render";
 

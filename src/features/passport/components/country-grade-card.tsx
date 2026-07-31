@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 
 import type { Grade } from "~/data/schemas";
-import type { PassportView } from "~/features/passport/api/passport-server";
+import type { PassportView } from "~/features/passport/utils/join-passport-view";
 import { COUNTRY_LABELS_JA } from "~/features/passport/utils/labels";
 
 const GRADE_COLORS = {
@@ -20,11 +20,9 @@ const GRADE_COLORS = {
   "△": "orange",
 } as const satisfies Record<Grade, string>;
 
-type CountryGradeCardProps = {
-  country: PassportView["countries"][number];
-};
+type CountryView = PassportView["countries"][number];
 
-type VisaAssessment = PassportView["countries"][number]["visas"][number];
+type VisaAssessment = CountryView["visas"][number];
 
 /**
  * Three states, not two. `visaRequirements` comes from the live JSON while `visas` comes from the
@@ -44,7 +42,7 @@ function assessmentStatus(assessment: VisaAssessment | undefined) {
  * A △ card must name the constraint it violated. That visible reason is the proof the deterministic
  * logic exists — a bare grade would be indistinguishable from model output.
  */
-export function CountryGradeCard({ country }: CountryGradeCardProps) {
+export function CountryGradeCard({ country }: Record<"country", CountryView>) {
   return (
     <Card withBorder padding="lg" radius="md" component="section">
       <Stack gap="sm">

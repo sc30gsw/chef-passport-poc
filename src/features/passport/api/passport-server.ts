@@ -9,12 +9,6 @@ const PassportRequest = Schema.Struct({
 });
 
 /**
- * The route/loader contract. Components keep importing `PassportView` from here; the type is a pure
- * re-export, erased at compile time, so it costs the browser nothing.
- */
-export type { PassportView } from "~/features/passport/api/passport-view";
-
-/**
  * The boundary, and nothing else. Everything this handler references is dropped from the client
  * build along with the handler itself, which is what keeps the committed cache and the gateway
  * client server-side. See .claude/rules/web/tanstack-start.md. The four static fixtures are the
