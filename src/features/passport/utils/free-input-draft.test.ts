@@ -1,4 +1,3 @@
-import { Either } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 
 import { MIN_RESUME_LENGTH } from "~/features/passport/types/free-input-request";
@@ -40,12 +39,14 @@ describe("decodeFreeInputDraft", () => {
   it("妥当な下書きはサーバーが受け取るリクエストそのものになる", () => {
     const decoded = decodeFreeInputDraft(VALID);
 
-    expect(Either.isRight(decoded)).toBe(true);
-    expect(Either.getOrThrow(decoded)).toEqual({
-      age: 32,
-      hasEvidenceProof: false,
-      languageLevel: "conversational",
-      resume: VALID.resume,
+    expect(decoded).toEqual({
+      ok: true,
+      request: {
+        age: 32,
+        hasEvidenceProof: false,
+        languageLevel: "conversational",
+        resume: VALID.resume,
+      },
     });
   });
 
@@ -60,10 +61,15 @@ describe("decodeFreeInputDraft", () => {
 
     const decoded = decodeFreeInputDraft(drifted);
 
-    expect(Either.isLeft(decoded)).toBe(true);
-    expect(Either.getLeft(decoded)).toBeDefined();
-    expect(Either.merge(decoded)).toEqual(
+    expect(decoded.ok).toBe(false);
+    expect(decoded.ok ? [] : decoded.issues).toEqual(
       expect.arrayContaining([expect.stringContaining("languageLevel")]),
     );
+  });
+
+  it("結果はEffectの型ではなく素のデータで返る（コンポーネントがEffectを触らないため）", () => {
+    // .claude/rules/typescript/effect-patterns.md の "Where Effect applies" 表では
+    // components/ は Effect 非対象。Either を返すとフォーム側が Either.isRight を呼ぶことになる。
+    expect(Object.keys(decodeFreeInputDraft(VALID))).toEqual(["ok", "request"]);
   });
 });

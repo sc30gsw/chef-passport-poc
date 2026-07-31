@@ -16,8 +16,10 @@ export type { PassportView } from "~/features/passport/api/passport-view";
 
 /**
  * The boundary, and nothing else. Everything this handler references is dropped from the client
- * build along with the handler itself, which is what keeps the committed cache, the data loaders and
- * the gateway client server-side. See .claude/rules/web/tanstack-start.md.
+ * build along with the handler itself, which is what keeps the committed cache and the gateway
+ * client server-side. See .claude/rules/web/tanstack-start.md. The four static fixtures are the
+ * deliberate exception: the route loaders decode them isomorphically so a client-side navigation
+ * needs no round trip, which is why `~/data/loaders` is the one data module the browser does get.
  *
  * The composition point is consulted here and nowhere else in the request path. The cache Layer is
  * taken unpaced: the recorded timings travel with the result and `usePipelineReplay` paces them in

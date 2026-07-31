@@ -1,4 +1,4 @@
-import type { Layer } from "effect";
+import type { ConfigError, Layer } from "effect";
 import { Cause, Effect, Exit, Option, Stream } from "effect";
 
 import { loadJobs, loadSkillVocabulary, loadVisaRequirements } from "~/data/loaders";
@@ -24,10 +24,13 @@ import { hasGatewayKey } from "~/lib/gateway-key";
  */
 export type FreeInputLayers = {
   /**
-   * Non-`never` error channel: building the live Layer reads `AI_GATEWAY_API_KEY` through `Config`
-   * and can fail. There is no cache Layer here — there is nothing for it to replay.
+   * Non-`never` error channel, and named rather than widened to `unknown`: building the live Layer
+   * reads `AI_GATEWAY_API_KEY` through `Config`, so the one way it can fail is a `ConfigError`.
+   * `unknown` would have accepted a Layer that fails for any other reason too, which is the untyped
+   * error channel `.claude/rules/typescript/effect-patterns.md` warns against. There is no cache
+   * Layer here — there is nothing for it to replay.
    */
-  readonly live: () => Layer.Layer<PassportPipeline, unknown>;
+  readonly live: () => Layer.Layer<PassportPipeline, ConfigError.ConfigError>;
 };
 
 /**

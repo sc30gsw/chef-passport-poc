@@ -66,15 +66,28 @@ export function languageLevelErrorJa(languageLevel: LanguageLevel | "", showRequ
   return showRequired && languageLevel === "" ? "英語レベルを選択してください" : undefined;
 }
 
-/** The schema decides. `Right` means the request the server will see, byte for byte. */
-export function decodeFreeInputDraft(
-  draft: FreeInputDraft,
-): Either.Either<FreeInputRequest, string[]> {
-  return decodeDraft(draft).pipe(
-    Either.mapLeft((error) =>
-      ArrayFormatter.formatErrorSync(error).map((issue) =>
-        issue.path.length === 0 ? issue.message : `${issue.path.join(".")}: ${issue.message}`,
-      ),
-    ),
-  );
+/**
+ * The result the form consumes. A plain discriminated union rather than the `Either` the decode
+ * produces: `.claude/rules/typescript/effect-patterns.md`'s "Where Effect applies" table reserves
+ * the components layer for "plain React consuming plain data", and returning an `Either` made
+ * the component call `Either.isRight` — Effect in the one layer the rule keeps free of it.
+ * The conversion happens here because this module is the boundary, exactly as a server function
+ * converts an `Exit` before it crosses to the client.
+ */
+export type FreeInputDecodeResult =
+  | { readonly ok: false; readonly issues: readonly string[] }
+  | { readonly ok: true; readonly request: FreeInputRequest };
+
+/** The schema decides. `ok` means the request the server will see, byte for byte. */
+export function decodeFreeInputDraft(draft: FreeInputDraft): FreeInputDecodeResult {
+  const decoded = decodeDraft(draft);
+
+  return Either.isRight(decoded)
+    ? { ok: true, request: decoded.right }
+    : {
+        issues: ArrayFormatter.formatErrorSync(decoded.left).map((issue) =>
+          issue.path.length === 0 ? issue.message : `${issue.path.join(".")}: ${issue.message}`,
+        ),
+        ok: false,
+      };
 }

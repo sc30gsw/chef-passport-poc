@@ -1,4 +1,4 @@
-import type { Layer } from "effect";
+import type { ConfigError, Layer } from "effect";
 import { Cause, Effect, Exit, Option, Stream } from "effect";
 
 import { loadJobs, loadPersona, loadSkillVocabulary, loadVisaRequirements } from "~/data/loaders";
@@ -26,11 +26,13 @@ import { hasGatewayKey } from "~/lib/gateway-key";
 export type PassportPipelineLayers = {
   readonly cache: () => Layer.Layer<PassportPipeline>;
   /**
-   * Non-`never` error channel: the live Layer reads `AI_GATEWAY_API_KEY` through `Config`, so
-   * building it can fail. That failure surfaces when the async iterable is pulled and is caught
-   * like any other live failure — one fallback path, not two.
+   * Non-`never` error channel, and named rather than widened to `unknown`: the live Layer reads
+   * `AI_GATEWAY_API_KEY` through `Config`, so the one way building it can fail is a `ConfigError`.
+   * That failure surfaces when the async iterable is pulled and is caught like any other live
+   * failure — one fallback path, not two. `unknown` here would be the untyped error channel
+   * `.claude/rules/typescript/effect-patterns.md` warns against.
    */
-  readonly live: () => Layer.Layer<PassportPipeline, unknown>;
+  readonly live: () => Layer.Layer<PassportPipeline, ConfigError.ConfigError>;
 };
 
 /**

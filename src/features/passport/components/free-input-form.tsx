@@ -10,7 +10,6 @@ import {
   Textarea,
   Title,
 } from "@mantine/core";
-import { Either } from "effect";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -63,11 +62,11 @@ export function FreeInputForm({
   const decoded = attempted ? decodeFreeInputDraft(draft) : undefined;
   const unexplainedIssues =
     decoded !== undefined &&
-    Either.isLeft(decoded) &&
+    !decoded.ok &&
     resumeError === undefined &&
     ageError === undefined &&
     languageLevelError === undefined
-      ? decoded.left
+      ? decoded.issues
       : [];
 
   function update(patch: Partial<FreeInputDraft>) {
@@ -80,7 +79,7 @@ export function FreeInputForm({
 
     // The schema decides, not the field-level messages above it: those exist to say *what* to fix.
     const result = decodeFreeInputDraft(draft);
-    if (Either.isRight(result)) onSubmit(result.right);
+    if (result.ok) onSubmit(result.request);
   }
 
   return (
