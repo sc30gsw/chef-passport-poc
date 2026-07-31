@@ -20,8 +20,16 @@
 
 Not part of `vp check`. Use `vp run` so installs stay routed through Vite+.
 
-- **Fallow** (`vp run fallow`) — unused files, dependencies, and exports. Use when trimming deps or refactoring entry points (`.fallowrc.json` configures the project).
+- **Fallow** (`vp run fallow`) — unused files, dependencies, and exports. Use when trimming deps or refactoring entry points (`.fallowrc.jsonc` configures the project).
 - **react-doctor** (`vp run doctor`) — React-focused health checks. The script uses `--no-lint`; keep ordinary linting on `vp lint`.
+
+**Both are gated in CI and both are currently at zero.** `ci.yml` runs `vp run fallow` as a
+blocking step; `react-doctor.yml` runs the action with `blocking: warning` + `scope: full`, pinned
+to the same version as `package.json`. Findings this project does not own — build output, vendored
+tool directories — are excluded in `doctor.config.ts` and `.fallowrc.jsonc`, each with a comment
+naming the reason. Note the action scans **with** lint while `vp run doctor` passes `--no-lint`, so
+a clean local `vp run doctor` is necessary but not sufficient; `vp exec react-doctor . --yes` is the
+run that matches CI. See #20.
 
 ## Project rules
 
