@@ -81,7 +81,7 @@ function generateLive(persona: Persona): Promise<PassportResult> {
       Effect.provide(PipelineLive),
       Effect.provide(Layer.merge(extractionModelLayer(), proseModelLayer())),
       Effect.provide(anthropicLayer()),
-    ) as Effect.Effect<PassportResult, Error>,
+    ),
   );
 }
 

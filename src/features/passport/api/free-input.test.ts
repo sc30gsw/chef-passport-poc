@@ -139,6 +139,18 @@ describe("streamFreeInputEvents — ガード", () => {
     expect(events[0]?._tag === "Failed" ? events[0].messageJa : "").toContain("APIキー");
   });
 
+  it("空白だけのキーは「設定漏れ」として扱い、ゲートウェイに投げない", async () => {
+    // 設定ミスであって攻撃ではない。ここを通すとゲートウェイの401になり、
+    // キー未設定なら成立していた「静かにキャッシュへ」が壊れる。
+    vi.stubEnv("AI_GATEWAY_API_KEY", "   ");
+    const model = countingModelLayer();
+
+    const events = await collect(BASE_REQUEST, model.layer);
+
+    expect(model.calls.count).toBe(0);
+    expect(events[0]?._tag === "Failed" ? events[0].messageJa : "").toContain("APIキー");
+  });
+
   it("自由入力が実行中なら、待たせずに拒否する（同時実行は全体で1件）", async () => {
     vi.stubEnv("AI_GATEWAY_API_KEY", "test-key");
     const model = countingModelLayer();

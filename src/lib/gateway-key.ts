@@ -13,5 +13,8 @@
 export function hasGatewayKey(): boolean {
   const apiKey = process.env.AI_GATEWAY_API_KEY;
 
-  return apiKey !== undefined && apiKey.length > 0;
+  // Trimmed, because a blank value is a misconfigured deploy rather than a key: without this the
+  // gate opens on `AI_GATEWAY_API_KEY=" "` and every live path answers with a gateway 401 instead
+  // of the clean cache-only behaviour a keyless deploy already has. See audit #16 finding 5.
+  return apiKey !== undefined && apiKey.trim().length > 0;
 }
