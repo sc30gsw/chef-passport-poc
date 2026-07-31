@@ -48,7 +48,7 @@ Layout and spacing in Tailwind; component appearance in Mantine props.
 <Button className="[&_.mantine-Button-label]:text-red-500">...</Button>
 ```
 
-Use `cn()` from `~/utils/cn` (re-exporting `cnfast`) to compose Tailwind classes on wrapper elements. `fmt.sortTailwindcss` is configured for `functions: ["cn"]`; it does not touch Mantine props.
+Write Tailwind classes as plain `className` string literals on wrapper elements. There is no class-composition helper: closed decision **#12** removed `~/utils/cn` and the `cnfast` dependency after the audit found zero conditional-className sites — Mantine props carry the conditional appearance, so nothing was left for `cn()` to compose. `fmt.sortTailwindcss` is enabled with defaults, so it sorts `class`/`className` and does not touch Mantine props. If a genuine conditional-className site ever appears, bring the helper back with that site in the same commit rather than in advance.
 
 ## Theme tokens
 

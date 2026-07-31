@@ -41,9 +41,9 @@ export default defineConfig({
     sortPackageJson: {
       sortScripts: true,
     },
-    sortTailwindcss: {
-      functions: ["cn"],
-    },
+    // `true` = class/className only. The `functions: ["cn"]` entry went with `src/utils/cn.ts`,
+    // deleted per closed decision #12 — the repo has no conditional-className site to compose.
+    sortTailwindcss: true,
   },
   lint: {
     categories: {
