@@ -99,7 +99,7 @@ export function deterministicProse(inputs: Omit<PassportInputs, "vocabulary">): 
   const { persona } = inputs;
   const { countries, excluded, matches } = assessDeterministically(inputs);
 
-  const skillSet: SkillSet = {
+  const skillSet = {
     experienceYears: persona.experienceYears,
     languageLevel: persona.languageLevel,
     primaryGenre: persona.primaryGenre,

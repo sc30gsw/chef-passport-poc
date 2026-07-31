@@ -349,7 +349,7 @@ function freeInputProducer(inputs: FreeInputInputs, offer: Offer, models: Pipeli
     // clamped to what the declared age accounts for (audit #16 finding 2). `summaryJa` is the only
     // field with no persona counterpart — it is prose, and nothing judges it.
     const persona = personaFromFreeInput(profile, extracted);
-    const skillSet: SkillSet = {
+    const skillSet = {
       experienceYears: persona.experienceYears,
       languageLevel: persona.languageLevel,
       primaryGenre: persona.primaryGenre,
